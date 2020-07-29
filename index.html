@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width">
+            <title>DRB</title>
+        <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css">
+        <link rel="stylesheet" href="css/style.css">
+        
+
+    </head>
+
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-xl-1 col-md-0 col-xs-0"></div>
+                <div id="drb_map" class="col-xl-5 col-md-6 col-xs-12"></div>
+                <!-- <div class="col-md-1"></div> -->
+                <div id="matrixChart" class="col-xl-5 col-md-6 col-xs-12" ></div>
+                <div class="col-xl-1 col-md-0 col-xs-0"></div>
+            </div>
+            <div class="row">
+                <div>
+                    <svg>
+                        <filter id="shadow1" style="width: 0px; height:0px">
+                            <feDropShadow dx="0" dy="0" stdDeviation="1.5" 
+                                flood-color="red"/>
+                        </filter>      
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript" src="lib/d3/d3.js"></script>
+        <script type="text/javascript" src="lib/topojson/topojson.js"></script>
+        <script type="text/javascript" src="lib/simple-statistics.min.js"></script>
+        <script type="text/javascript" src="lib/jquery-3.4.1.js"></script>
+        <script type="text/javascript" src="lib/bootstrap/bootstrap.min.js"></script>
+        <script type="text/javascript" src="js/main.js"></script>
+    </body>
+</html>

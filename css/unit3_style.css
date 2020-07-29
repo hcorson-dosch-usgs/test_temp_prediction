@@ -1,0 +1,203 @@
+/* Hayley Corson-Dosch style sheet */
+
+body {
+  margin-bottom: 0px;
+}
+
+/* style axis */
+.axis path,
+.axis line {
+  fill: none;
+  stroke: black;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  font-family: sans-serif;
+  font-size: 0.9em;
+}
+
+.title {
+  font-family: sans-serif;
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+/* .state {
+  fill: none;
+  stroke: #FFFFFF;
+  stroke-width: 0.5px;
+}
+
+.nation {
+  fill: #EBEBEB;
+  stroke: #FFFFFF;
+  stroke-width: 0.5px;
+} */
+
+.counties {
+  stroke: #FFFFFF;
+  stroke-width: 0.5px;
+  stroke-linecap: round;
+}
+
+/* .gratLines {
+  fill: none;
+  stroke: #B3CCE6;
+  stroke-width: 1px;
+}
+
+.gratBackground {
+  fill: #D9E6F2;
+} */
+
+.map {
+  /* border: medium solid #5A5A5A;
+  border-width: 0.5px; */
+  margin: 0px 0 0 20px;
+  fill: none;
+}
+
+.chart {
+  float: right;
+  margin-left: 30px;
+  margin-top: 5px;
+  position: absolute;
+}
+
+.chartTitle {
+  font-family: sans-serif;
+  font-size: 0.9em;
+  fill: #525252;
+  font-weight: bold;
+}
+
+.chartBackground {
+  fill: none /* rgba(232, 232, 232, 0.2) */
+}
+
+.chartFrame {
+  fill: none;
+  /* stroke: #5A5A5A; */
+  stroke-width: 0.8px;
+  shape-rendering: crispEdges;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #5A5A5A;
+  stroke-width: 0.8px;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  font-family: sans-serif;
+  font-size: 1em;
+  fill: #757575;
+}
+
+.dropdown {
+  width: 13.2%;
+  position: absolute;
+  text-align: left;
+  top: 100px; /* was 70 with map border*/
+  left: 320px; /* was 420 with map border*/
+  z-index: 10;
+  font-family: sans-serif;
+  font-size: 0.8em;
+  font-weight: bold;
+  color: #bd0d0d;
+  padding: 2px;
+  border: 1px solid #999;
+  box-shadow: 1px 1px 4px #b3b3b3; /* 2px 2px 4px #999 */
+}
+
+option {
+  font-weight: normal;
+}
+
+.infolabel {
+  font-family: sans-serif;
+  font-size: 0.6em;
+  margin: 0 2px 0 0;
+  position: absolute;
+  height: 33px;
+  /* min-width: 5px; */
+  color: #000;
+  background-color: #fff;
+  opacity: 0.9;
+  /* fill: rgba(232, 232, 232, 0.2) */
+  border: solid thin #fff;
+  padding: 5px 5px;
+  top: -75px;
+}
+
+.infolabel h1 {
+  margin: 0 20px 0 0;
+  padding: 0;
+  display: inline-block;
+  line-height: 1em;
+}
+
+.infolabelPC {
+  font-family: sans-serif;
+  font-size: 0.6em;
+  /* margin: 0 2px 0 0; */
+  position: absolute;
+  height: 10px;
+  /* min-width: 5px; */
+  color: #000;
+  background-color: #fff;
+  opacity: 0.9;
+  /* fill: rgba(232, 232, 232, 0.2) */
+  border: solid thin #fff;
+  padding: 2px 2px;
+  top: -75px;
+}
+
+.placeName {
+  margin: 3px 0 0 0;
+}
+
+.parallelChart {
+  float: right;
+  margin: 325px 20px 0 0px;
+  position: absolute;
+}
+
+.axisPC {
+  opacity: 0.6;
+  font-family: sans-serif;
+  font-size: 0.59vw;
+}
+
+.axisPC:hover {
+  opacity: 1;
+}
+
+.pageHeading {
+  font-family: sans-serif;
+  font-size: 2vw;
+  text-align: center;
+  margin: 5px 0 0px 0;
+}
+
+#Sources {
+  float: left;
+  height: 30px;
+  width: 70%;
+  margin-top: 0px;
+  margin-bottom: 3px;
+  font-family: Arial;
+  text-align: left;
+  line-height: 11px;
+  font-size: 9px;
+}
+
+h6 {
+  font-family: Arial;
+  color: #666666;
+  text-align: left;
+}
