@@ -333,14 +333,14 @@
             })
             .style("fill", "None")
             .on("mouseover", function(d) {
-                mouseover(d, tooltip);
+                mouseover(d, tooltip, expressed);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveSegSpatial(d, tooltip, position);
+                mousemoveSegSpatial(d, tooltip, position, expressed);
             })
             .on("mouseleave", function(d) {
-                mouseleave(d, tooltip);
+                mouseleave(d, tooltip, expressed);
             });
             // // set color based on colorScale function
             // .style("stroke", function(d){
@@ -449,7 +449,7 @@
             .style("opacity", 1);
 
         // add the rectangles
-        createMatrixRectangles(csv_matrix, csv_annual_count, segments)
+        createMatrixRectangles(expressed, csv_matrix, csv_annual_count, segments)
 
         // draw x axes
         svgMatrix.append("g")
@@ -476,7 +476,7 @@
     };
 
     // *********************************************************************//
-    function createMatrixRectangles(csv_matrix, csv_annual_count, segments) {
+    function createMatrixRectangles(expressed, csv_matrix, csv_annual_count, segments) {
         console.log("createMatrixRectangles:")
         console.log(segments)
         
@@ -517,214 +517,121 @@
             // .style("border-radius", "5px")
             .style("padding", "5px")
 
-        // revised build of spatial rectangles
-        var matrixSpatialRectangles = transformedMatrix.selectAll('.matrixSpatialRect')           
-            .data(segments)
-            .enter()
-            .append("rect")
-            .attr("x", xscale("1980")) /* d.yearmonth if temporal interval = yearmonth */
-            .attr("y", function(d) { return yscale(d.seg_id_nat) }) /* d.seg_id_nat */
-            .attr("rx", 1)
-            .attr("ry", 1)
-            .attr("width", matrix_width)
-            .attr("height", yscale.bandwidth() )
-            .attr("class", function(d) { 
-                return 'matrixSpatialRect seg' + d.seg_id_nat;
-            })
-            .style("fill", function(d) { 
-                if (d.properties.total_count > 0) {
-                    return "#ffffff";                   
-                } else {
-                    return "#ffffff";  /*"None"*/
-                }
-            })
-            .style("stroke-width", 0.5)
-            .style("stroke", "None")
-            .style("opacity", function(d) {
-                if (d.properties.total_count > 0) {
-                    return 0;                   
-                } else {
-                    return 1; 
-                }
-            })
-            // .on("click", function(d){
-            //     clickRectSpatial(d, tooltip);
-            // })
-            .on("mouseover", function(d) {
-                mouseover(d, tooltip);
-            })
-            .on("mousemove", function(d) {
-                position = d3.mouse(this);
-                mousemoveRect(d, tooltip, position);
-            })
-            .on("mouseleave", function(d) {
-                mouseleave(d, tooltip);
-            })
-
-        // revised build of temporal rectangles
-        var matrixTemporalRectangles = transformedMatrix.selectAll('.matrixTemporalRect')
-            .data(csv_annual_count)
-            .enter()
-            .append("rect")
-            .attr("x", function(d){
-                return xscale(d[timestep])
-            }) 
-            .attr("y", 0) /* function(d) { return yscale(0) } */
-            .attr("rx", 1)
-            .attr("ry", 1)
-            .attr("width", xscale.bandwidth())
-            .attr("height", matrix_height)
-            .attr("class", function(d) { 
-                return 'matrixTemporalRect time' + d.year;
-            })
-            .style("fill", "#ffffff")
-            .style("stroke-width", 0.5)
-            .style("stroke", "None")
-            .style("opacity", 0)
-            .on("mouseover", function(d) {
-                mouseover(d, tooltip);
-            })
-            .on("mousemove", function(d) {
-                position = d3.mouse(this);
-                mousemoveRect(d, tooltip, position);
-            })
-            .on("mouseleave", function(d) {
-                mouseleave(d, tooltip);
-            })
-
-        // // build rectangles
-        // if (expressed == 'Space') {
-
-        //     // transformedMatrix.selectAll('matrixRect.temporal').remove()
-        //     // transformedMatrix.selectAll('matrixRect.temporal').remove()
-        //     // svgMatrix.selectAll('.matrixRect.temporal').remove
-            
-        //     // var matrixRectangles = svgMatrix.selectAll('matrixRect')
-        //     // var props = segments.properties
-        //     // console.log("props:")
-        //     // console.log(props)
-        //     // var matrixRectangles = transformedMatrix.selectAll('.matrixRect') // matrixRect.spatial
-        //     //     .data(segments) /*  */
-        //     //     matrixRectangles.exit().remove(); //remove unneeded rectangles
-        //     //     matrixRectangles.enter().append('rect')
-        //     //         .attr("x", xscale("1980")) /* d.yearmonth if temporal interval = yearmonth */
-        //     //         .attr("y", function(d) { return yscale(d.seg_id_nat) }) /* d.seg_id_nat */
-        //     //         .attr("rx", 1)
-        //     //         .attr("ry", 1)
-        //     //         .attr("width", matrix_width)
-        //     //         .attr("height", yscale.bandwidth() )
-        //     //         .attr("class", function(d) { 
-        //     //             return 'matrixRect spatial seg' + d.seg_id_nat;
-        //     //         })
-        //     //         .style("fill", function(d) { 
-        //     //             if (d.properties.total_count > 0) {
-        //     //                 return "#ffffff";                   
-        //     //             } else {
-        //     //                 return "#ffffff";  /*"None"*/
-        //     //             }
-        //     //         })
-        //     //         .style("stroke-width", 0.5)
-        //     //         .style("stroke", "None")
-        //     //         .style("opacity", function(d) {
-        //     //             if (d.properties.total_count > 0) {
-        //     //                 return 0;                   
-        //     //             } else {
-        //     //                 return 1; 
-        //     //             }
-        //     //         })
-        //     //         // .on("click", function(d){
-        //     //         //     clickRectSpatial(d, tooltip);
-        //     //         // })
-        //     //         .on("mouseover", function(d) {
-        //     //             mouseover(d, tooltip);
-        //     //         })
-        //     //         .on("mousemove", function(d) {
-        //     //             position = d3.mouse(this);
-        //     //             mousemoveRect(d, tooltip, position);
-        //     //         })
-        //     //         .on("mouseleave", function(d) {
-        //     //             mouseleave(d, tooltip);
-        //     //         })
-        // } else if (expressed == 'Time') {
-        //     console.log('The selected dimension should be time and is: ' + expressed)
-
-        //     // transformedMatrix.selectAll('matrixRect.spatial').remove()
-        //     // svgMatrix.selectAll('.matrixRect.spatial').remove
-        //     // var spatialRectangles = transformedMatrix.selectAll('matrixRect.spatial')
-        //     //     .style("fill", "None")
-
-        //     // var matrixRectangles = transformedMatrix.selectAll('.matrixRect') // matrixRect.temporal
-        //     //     .data(csv_annual_count) /*  */
-        //     //     matrixRectangles.exit().remove(); //remove unneeded rectangles
-        //     //     matrixRectangles.enter().append('rect')
-        //     //         .attr("x", function(d){
-        //     //             return xscale(d[timestep])
-        //     //         }) 
-        //     //         .attr("y", 0) /* function(d) { return yscale(0) } */
-        //     //         .attr("rx", 1)
-        //     //         .attr("ry", 1)
-        //     //         .attr("width", xscale.bandwidth())
-        //     //         .attr("height", matrix_height)
-        //     //         .attr("class", function(d) { 
-        //     //             return 'matrixRect temporal time' + d.year;
-        //     //         })
-        //     //         .style("fill", "#ffffff")
-        //     //         .style("stroke-width", 0.5)
-        //     //         .style("stroke", "None")
-        //     //         .style("opacity", 0)
-        //     //         .on("mouseover", function(d) {
-        //     //             mouseover(d, tooltip);
-        //     //         })
-        //     //         .on("mousemove", function(d) {
-        //     //             position = d3.mouse(this);
-        //     //             mousemoveRect(d, tooltip, position);
-        //     //         })
-        //     //         .on("mouseleave", function(d) {
-        //     //             mouseleave(d, tooltip);
-        //     //         })
-        // }
-    };
-
-    // *********************************************************************//
-    function mousemoveRect(data, tooltip, position) {
+        // build rectangles
         if (expressed == 'Space') {
-            // console.log(data.properties.total_count)
-            if (data.properties) {
-                yoffset = position[1]+7
-                tooltip
-                    .html("Segment " + data.seg_id_nat)
-                    .style("left", -12 + "px")
-                    .style("top", yoffset + "px");
-            }
 
-            // yoffset = position[1]+7
-            // tooltip
-            //     .html("Segment " + data.seg_id_nat)
-            //     .style("left", -12 + "px")
-            //     .style("top", yoffset + "px");
+            // transformedMatrix.selectAll('matrixRect.temporal').remove()
+            // transformedMatrix.selectAll('matrixRect.temporal').remove()
+            // svgMatrix.selectAll('.matrixRect.temporal').remove
+            
+            // var matrixRectangles = svgMatrix.selectAll('matrixRect')
+            // var props = segments.properties
+            // console.log("props:")
+            // console.log(props)
+            var matrixRectangles = transformedMatrix.selectAll('.matrixRect') // matrixRect.spatial
+                .data(segments) /*  */
+                matrixRectangles.exit().remove(); //remove unneeded rectangles
+                matrixRectangles.enter().append('rect')
+                    .attr("x", xscale("1980")) /* d.yearmonth if temporal interval = yearmonth */
+                    .attr("y", function(d) { return yscale(d.seg_id_nat) }) /* d.seg_id_nat */
+                    .attr("rx", 1)
+                    .attr("ry", 1)
+                    .attr("width", matrix_width)
+                    .attr("height", yscale.bandwidth() )
+                    .attr("class", function(d) { 
+                        return 'matrixRect spatial seg' + d.seg_id_nat;
+                    })
+                    .style("fill", function(d) { 
+                        if (d.properties.total_count > 0) {
+                            return "#ffffff";                   
+                        } else {
+                            return "#ffffff";  /*"None"*/
+                        }
+                    })
+                    .style("stroke-width", 0.5)
+                    .style("stroke", "None")
+                    .style("opacity", function(d) {
+                        if (d.properties.total_count > 0) {
+                            return 0;                   
+                        } else {
+                            return 1; 
+                        }
+                    })
+                    // .on("click", function(d){
+                    //     clickRectSpatial(d, tooltip);
+                    // })
+                    .on("mouseover", function(d) {
+                        mouseover(d, tooltip, expressed);
+                    })
+                    .on("mousemove", function(d) {
+                        position = d3.mouse(this);
+                        mousemoveRect(d, tooltip, position, expressed);
+                    })
+                    .on("mouseleave", function(d) {
+                        mouseleave(d, tooltip, expressed);
+                    })
+        } else if (expressed == 'Time') {
+            console.log('The selected dimension should be time and is: ' + expressed)
 
-        } else if (expressed = 'Time') {
-            if (data.total_annual_count) {
-                xoffset = position[0]+25
-                yoffset = position[1]-5
-                tooltip
-                    .html(data.year)
-                    .style("left", xoffset + "px")
-                    .style("top", yoffset + "px");
-            }
-            // console.log(data.properties.total_count)
+            // transformedMatrix.selectAll('matrixRect.spatial').remove()
+            // svgMatrix.selectAll('.matrixRect.spatial').remove
+            // var spatialRectangles = transformedMatrix.selectAll('matrixRect.spatial')
+            //     .style("fill", "None")
 
-            // xoffset = position[0]+25
-            // yoffset = position[1]-5
-            // tooltip
-            //     .html(data.year)
-            //     .style("left", xoffset + "px")
-            //     .style("top", yoffset + "px");
+            var matrixRectangles = transformedMatrix.selectAll('.matrixRect') // matrixRect.temporal
+                .data(csv_annual_count) /*  */
+                matrixRectangles.exit().remove(); //remove unneeded rectangles
+                matrixRectangles.enter().append('rect')
+                    .attr("x", function(d){
+                        return xscale(d[timestep])
+                    }) 
+                    .attr("y", 0) /* function(d) { return yscale(0) } */
+                    .attr("rx", 1)
+                    .attr("ry", 1)
+                    .attr("width", xscale.bandwidth())
+                    .attr("height", matrix_height)
+                    .attr("class", function(d) { 
+                        return 'matrixRect temporal time' + d.year;
+                    })
+                    .style("fill", "#ffffff")
+                    .style("stroke-width", 0.5)
+                    .style("stroke", "None")
+                    .style("opacity", 0)
+                    .on("mouseover", function(d) {
+                        mouseover(d, tooltip, expressed);
+                    })
+                    .on("mousemove", function(d) {
+                        position = d3.mouse(this);
+                        mousemoveRect(d, tooltip, position, expressed);
+                    })
+                    .on("mouseleave", function(d) {
+                        mouseleave(d, tooltip, expressed);
+                    })
         }
     };
 
     // *********************************************************************//
-    function mousemoveSegSpatial(data, tooltip, position) {
+    function mousemoveRect(data, tooltip, position, expressed) {
+        if (expressed == 'Space') {
+            // console.log(data.properties.total_count)
+            yoffset = position[1]+7
+            tooltip
+                .html("Segment " + data.seg_id_nat)
+                .style("left", -12 + "px")
+                .style("top", yoffset + "px");
+        } else if (expressed = 'Time') {
+            // console.log(data.properties.total_count)
+            xoffset = position[0]+25
+            yoffset = position[1]-5
+            tooltip
+                .html(data.year)
+                .style("left", xoffset + "px")
+                .style("top", yoffset + "px");
+        }
+    };
+
+    // *********************************************************************//
+    function mousemoveSegSpatial(data, tooltip, position, expressed) {
         if (expressed == 'Space') {
             tooltip
                 .html("Segment " + data.seg_id_nat)
@@ -734,234 +641,113 @@
     };
     
     // *********************************************************************//
-    function mouseover(data, tooltip) {
+    function mouseover(data, tooltip, expressed) {
         if (expressed == 'Space') {
             console.log("spatial mouseover data: ")
             console.log(data)
 
-            d3.selectAll(".matrixTemporalRect")
-                .style("fill", "None")
-
-            if (data.properties) {
-                tooltip
-                    .style("opacity", 1);
-                // d3.selectAll(".matrixTemporalRect")
-                //     .style("opacity", 0)   
-                d3.selectAll(".matrixSpatialRect")
-                    .style("opacity", 0.6)
-                    .style("stroke-width", 1);
-                d3.selectAll(".matrixSpatialRect.seg" + data.seg_id_nat)
-                    // .style("stroke", "red")
-                    .style("stroke-width", 0.5)
-                    // .style("fill", "#ffffff")
-                    .style("opacity", function(data) {
-                        if (data.properties.total_count > 0) { //properties.total_count
-                            return 0;                   
-                        } else {
-                            return 1;
-                        }
-                    })
-                    .style("stroke", function(data) {
-                        if (data.properties.total_count > 0) {
-                            return "None";                   
-                        } else {
-                            return "red";
-                        }
-                    });
-                d3.selectAll(".delaware_bay")
-                    .style("fill", "#bdc8db")
-                d3.selectAll(".river_segments")
-                    .style("stroke", "#bdc8db")
-                d3.selectAll(".river_segments.seg" + data.seg_id_nat)
-                    .style("stroke", "red")
-                    .attr("opacity", 1)
-                    .attr("filter", "url(#shadow1)")
-                    .raise()
-
-            } else {
-                console.log("spatial mouseover, temporal data: ")
-                console.log(data)
-            }
-
-            // tooltip
-            //     .style("opacity", 1);
-            // // d3.selectAll(".matrixTemporalRect")
-            // //     .style("opacity", 0)   
-            // d3.selectAll(".matrixSpatialRect")
-            //     .style("opacity", 0.6)
-            //     .style("stroke-width", 1);
-            // d3.selectAll(".matrixSpatialRect.seg" + data.seg_id_nat)
-            //     // .style("stroke", "red")
-            //     .style("stroke-width", 0.5)
-            //     // .style("fill", "#ffffff")
-            //     .style("opacity", function(data) {
-            //         if (data.properties.total_count > 0) { //properties.total_count
-            //             return 0;                   
-            //         } else {
-            //             return 1;
-            //         }
-            //     })
-            //     .style("stroke", function(data) {
-            //         if (data.properties.total_count > 0) {
-            //             return "None";                   
-            //         } else {
-            //             return "red";
-            //         }
-            //     });
-            // d3.selectAll(".delaware_bay")
-            //     .style("fill", "#bdc8db")
-            // d3.selectAll(".river_segments")
-            //     .style("stroke", "#bdc8db")
-            // d3.selectAll(".river_segments.seg" + data.seg_id_nat)
-            //     .style("stroke", "red")
-            //     .attr("opacity", 1)
-            //     .attr("filter", "url(#shadow1)")
-            //     .raise()
-
+            tooltip
+                .style("opacity", 1);
+            d3.selectAll(".matrixRect.spatial")
+                .style("opacity", 0.6)
+                .style("stroke-width", 1);
+            d3.selectAll(".matrixRect.seg" + data.seg_id_nat)
+                // .style("stroke", "red")
+                .style("stroke-width", 0.5)
+                // .style("fill", "#ffffff")
+                .style("opacity", function(data) {
+                    if (data.properties.total_count > 0) { //properties.total_count
+                        return 0;                   
+                    } else {
+                        return 1;
+                    }
+                })
+                .style("stroke", function(data) {
+                    if (data.properties.total_count > 0) {
+                        return "None";                   
+                    } else {
+                        return "red";
+                    }
+                });
+            d3.selectAll(".delaware_bay")
+                .style("fill", "#bdc8db")
+            d3.selectAll(".river_segments")
+                .style("stroke", "#bdc8db")
+            d3.selectAll(".river_segments.seg" + data.seg_id_nat)
+                .style("stroke", "red")
+                .attr("opacity", 1)
+                .attr("filter", "url(#shadow1)")
+                .raise()
         } else if (expressed = 'Time') {
             console.log("temporal mouseover data: ")
             console.log(data)
 
-            d3.selectAll(".matrixSpatialRect")
-                .style("fill", "None")
-
-            if (data.total_annual_count) {
-                tooltip
-                    .style("opacity", 1);
-                // d3.selectAll(".cell")
-                //     .style("opacity", 0.6)
-                // d3.selectAll(".cell.timestep" + data.year)
-                // d3.selectAll(".matrixSpatialRect")
-                d3.selectAll(".matrixTemporalRect")
-                    .style("opacity", 0.6)
-                    .style("stroke-width", 0.5);
-                d3.selectAll(".matrixTemporalRect.time" + data.year)
-                    .style("stroke-width", 0.5)
-                    .style("opacity", 0)
-                d3.selectAll(".delaware_bay")
-                    .style("fill", "#bdc8db")
-                d3.selectAll(".river_segments")
-                    .style("stroke", "#bdc8db")
-
-
-            } else {
-                console.log("temporal mouseover, spatial data: ")
-                console.log(data)
-            }
-
-            // tooltip
-            //     .style("opacity", 1);
-            // // d3.selectAll(".cell")
-            // //     .style("opacity", 0.6)
-            // // d3.selectAll(".cell.timestep" + data.year)
-            // // d3.selectAll(".matrixSpatialRect")
-            // d3.selectAll(".matrixTemporalRect")
+            tooltip
+                .style("opacity", 1);
+            // d3.selectAll(".cell")
             //     .style("opacity", 0.6)
-            //     .style("stroke-width", 0.5);
-            // d3.selectAll(".matrixTemporalRect" + data.year)
-            //     .style("stroke-width", 0.5)
-            //     .style("opacity", 0)
-            // d3.selectAll(".delaware_bay")
-            //     .style("fill", "#bdc8db")
-            // d3.selectAll(".river_segments")
-            //     .style("stroke", "#bdc8db")
+            // d3.selectAll(".cell.timestep" + data.year)
+            d3.selectAll(".matrixRect")
+                .style("opacity", 0.6)
+                .style("stroke-width", 0.5);
+            d3.selectAll(".matrixRect.time" + data.year)
+                .style("stroke-width", 0.5)
+                .style("opacity", 0)
+            d3.selectAll(".delaware_bay")
+                .style("fill", "#bdc8db")
+            d3.selectAll(".river_segments")
+                .style("stroke", "#bdc8db")
         }
 
             
     };
 
     // *********************************************************************//
-    function mouseleave(data, tooltip) {
+    function mouseleave(data, tooltip, expressed) {
         if (expressed == 'Space') {
             console.log("spatial mouseleave data: ")
             console.log(data)
 
-            d3.selectAll(".matrixTemporalRect")
+            tooltip
+                .style("opacity", 0)
+            d3.selectAll(".matrixRect") /* .matrixRect.seg" + data.seg_id_nat */
+                .style("stroke", "None")
                 .style("fill", "#ffffff")
-
-            if (data.properties) {
-                tooltip
-                    .style("opacity", 0)
-                d3.selectAll(".matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
-                    .style("stroke", "None")
-                    .style("fill", "#ffffff")
-                    .style("stroke-width", 0.5)
-                    .style("opacity", 0)
-                d3.selectAll(".delaware_bay")
-                    .style("fill", "#6079a3")
-                d3.selectAll(".river_segments")
-                    .style("stroke", "#6079a3")
-                d3.selectAll(".river_segments.seg" + data.seg_id_nat)
-                    .style("stroke", "#6079a3")
-                    .attr("opacity", 1)
-                    .attr("filter","None")
-            } else {
-               console.log("spatial mouseleave, temporal data: ")
-               console.log(data)
-            }
-
-            // tooltip
-            //     .style("opacity", 0)
-            // d3.selectAll(".matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
-            //     .style("stroke", "None")
-            //     .style("fill", "#ffffff")
-            //     .style("stroke-width", 0.5)
-            //     .style("opacity", 0)
-            //     // .style("opacity", function(data) {
-            //     //     if (data.properties.total_count > 0) {
-            //     //         return 0;                   
-            //     //     } else {
-            //     //         return 1;
-            //     //     }
-            //     // })
-            //     // .transition()
-            //     // .delay(20)
-            //     // .duration(500)
-            // d3.selectAll(".delaware_bay")
-            //     .style("fill", "#6079a3")
-            // d3.selectAll(".river_segments")
-            //     .style("stroke", "#6079a3")
-            // d3.selectAll(".river_segments.seg" + data.seg_id_nat)
-            //     .style("stroke", "#6079a3")
-            //     .attr("opacity", 1)
-            //     .attr("filter","None")
-
+                .style("stroke-width", 0.5)
+                .style("opacity", 0)
+                // .style("opacity", function(data) {
+                //     if (data.properties.total_count > 0) {
+                //         return 0;                   
+                //     } else {
+                //         return 1;
+                //     }
+                // })
+                // .transition()
+                // .delay(20)
+                // .duration(500)
+            d3.selectAll(".delaware_bay")
+                .style("fill", "#6079a3")
+            d3.selectAll(".river_segments")
+                .style("stroke", "#6079a3")
+            d3.selectAll(".river_segments.seg" + data.seg_id_nat)
+                .style("stroke", "#6079a3")
+                .attr("opacity", 1)
+                .attr("filter","None")
         } else if (expressed = 'Time') {
             console.log("temporal mouseleave data: ")
             console.log(data)
 
-            d3.selectAll(".matrixSpatialRect")
+            tooltip
+                .style("opacity", 0)
+            d3.selectAll(".matrixRect") 
+                .style("stroke", "None")
                 .style("fill", "#ffffff")
-
-            if (data.total_annual_count)  {
-                tooltip
-                    .style("opacity", 0)
-                d3.selectAll(".matrixTemporalRect") 
-                    .style("stroke", "None")
-                    .style("fill", "#ffffff")
-                    .style("stroke-width", 0.5)
-                    .style("opacity", 0)
-                d3.selectAll(".delaware_bay")
-                    .style("fill", "#6079a3")
-                d3.selectAll(".river_segments")
-                    .style("stroke", "#6079a3")
-                
-            } else {
-                console.log("temporal mouseleave, spatial data:")
-                console.log(data)
-            }
-
-            // tooltip
-            //     .style("opacity", 0)
-            // d3.selectAll(".matrixTemporalRect") 
-            //     .style("stroke", "None")
-            //     .style("fill", "#ffffff")
-            //     .style("stroke-width", 0.5)
-            //     .style("opacity", 0)
-            // d3.selectAll(".delaware_bay")
-            //     .style("fill", "#6079a3")
-            // d3.selectAll(".river_segments")
-            //     .style("stroke", "#6079a3")
+                .style("stroke-width", 0.5)
+                .style("opacity", 0)
+            d3.selectAll(".delaware_bay")
+                .style("fill", "#6079a3")
+            d3.selectAll(".river_segments")
+                .style("stroke", "#6079a3")
             // d3.selectAll(".river_segments.seg" + data.seg_id_nat)
             //     .style("stroke", "#6079a3")
             //     .attr("opacity", 1)
@@ -1035,7 +821,7 @@
         // reset expressed dimension based on selected dimension
         expressed = dimension;
 
-        createMatrixRectangles(csv_matrix, csv_annual_count, segments)
+        createMatrixRectangles(expressed, csv_matrix, csv_annual_count, segments)
 
     };
 
