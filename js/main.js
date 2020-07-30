@@ -17,6 +17,12 @@
     // selection list for interaction
     var select_list = ['Space', 'Time']
 
+    // create spatial data array
+    var dataArraySpace = []
+        
+    // create temporal data array
+    var dataArrayTime = []
+
     // margins, width and height for matrix chart
     var matrix_margin = {top: 20, right: 15, bottom: 15, left: 55},
         matrix_width = 500 - matrix_margin.left - matrix_margin.right,
@@ -53,6 +59,7 @@
                         // d3.csv("data/segment_year_counts_order13_8019.csv"),
                         // d3.csv("data/segment_year_counts_order47_8019.csv"),
                         d3.csv("data/matrix_annual_obs.csv"), /* matrix_segment_yearmonth_counts */
+                        d3.csv("data/obs_annual_count.csv"),
                         d3.json("data/segment_geojson.json"),
                         d3.json("data/NHDWaterbody_DelawareBay_pt6per_smooth.json")
                     ];
@@ -66,8 +73,9 @@
             // csv_stackedarea = data[2];
             // csv_stackedarea2 = data[3];
             csv_matrix = data[1];
-            json_segments = data[2];
-            json_bay = data[3];
+            csv_annual_count = data[2];
+            json_segments = data[3];
+            json_bay = data[4];
 
             console.log(csv_matrix)
 
@@ -79,6 +87,7 @@
             segments = joinData(segments, csv_flow);
 
             // check the results
+            console.log('segments:')
             console.log(segments);
             console.log(bay);
 
@@ -97,13 +106,22 @@
             // create stacked area chart
             // createStackedAreaChart(csv_stackedarea, csv_stackedarea2);
 
-
+            // populate array of segments
+            for (var i=0; i<segments.length; i++){
+                var val = segments[i]['seg_id_nat'];
+                dataArraySpace.push(val);
+            };
+            // populate array of times
+            for (var i=0; i<csv_annual_count.length; i++){
+                var val = csv_annual_count[i]['year'];
+                dataArrayTime.push(val);
+            };
 
             // create matrix
-            createMatrix(csv_matrix, segments, timestep);
+            createMatrix(csv_matrix, csv_annual_count, segments, timestep);
 
             // create dropdown
-            createDropdown(select_list, csv_matrix, segments)
+            createDropdown(select_list, csv_matrix, csv_annual_count, segments)
 
 
 
@@ -340,7 +358,9 @@
     };
 
     // *********************************************************************//
-    function createMatrix(csv_matrix, segments, timestep){
+    function createMatrix(csv_matrix, csv_annual_count, segments, timestep){
+        console.log("createMatrix:")
+        console.log(segments)
         // var margin = {top: 20, right: 15, bottom: 15, left: 55},
         //     width = 500 - margin.left - margin.right,
         //     height = window.innerHeight - margin.top - margin.bottom;
@@ -421,187 +441,17 @@
             })
             .attr("height", y.bandwidth())
             .attr("class", function(d) { 
-                return 'cell segment' + d.seg_id_nat + ' time' + d[timestep]
+                return 'cell segment' + d.seg_id_nat + ' timestep' + d[timestep]
             })
             .style("fill", function(d) {
                 return myColor(d.obs_count);
             })
             .style("stroke-width", 0.5)
             .style("stroke", "None")
-            .style("opacity", 1)
-            // .append("rect")
-            //     // .sort(function(a,b){
-            //     //     return b['seg_centroid_lat'] - a['seg_centroid_lat']
-            //     // })
-            //     .attr("x", function (d){
-            //         if (d.obs_count > 0) {
-            //             return x(d.year)
-            //         }
-            //     })
-            //     .attr("y", function(d) { 
-            //         if (d.obs_count > 0) {
-            //             return y(d.seg_id_nat) /* d.seg_id_nat */
-            //         } 
-            //     })
-            //     .attr("rx", function(d) {
-            //         if (d.obs_count > 0) {
-            //             return 1
-            //         }
-            //     })
-            //     .attr("ry", function(d) {
-            //         if (d.obs_count > 0) {
-            //             return 1 
-            //         }
-            //     })
-            //     .attr("width", function(d) {
-            //         if (d.obs_count > 0) {
-            //             return x.bandwidth()
-            //         }
-            //     })
-            //     .attr("x", function(d) {
-            //         if (d.obs_count > 0) {
-            //             return x(d[timestep])
-            //         }
-            //     })
-            //     .attr("height", function(d) {
-            //         if (d.obs_count > 0) {
-            //             return y.bandwidth()
-            //         }
-            //     })
-            //     .attr("class", function(d) { 
-            //         if (d.obs_count > 0) {
-            //             return 'cell segment' + d.seg_id_nat + ' time' + d[timestep];
-            //         }
-            //     })
-            //     .style("fill", function(d) {
-            //         if (d.obs_count > 0) {
-            //             return myColor(d.obs_count);
-            //         } 
-            //     })
-            //     .style("stroke-width", function(d) {
-            //         if (d.obs_count > 0) {
-            //             return 1
-            //         }
-            //     })
-            //     .style("stroke", function(d) {
-            //         if (d.obs_count > 0) {
-            //             return "None"
-            //         }
-            //     })
-            //     .style("opacity", function(d) {
-            //         if (d.obs_count > 0) {
-            //             return 1
-            //         }
-            //     })
-           
-                        
-            // .on("mouseover", mouseover)
-            // .on("mousemove", mousemove)
-            // .on("mouseleave", mouseleave)
-        
+            .style("opacity", 1);
 
-            // add the rectangles
-            // var matrixRectangles = svgMatrix.selectAll('matrixRects')
-
-
-            createMatrixRectangles(expressed, csv_matrix, segments)
-
-                // .data(segments) /*  */
-                // .enter()
-                // .append("rect")
-                //     // .sort(function(a,b){
-                //     //     return b['seg_centroid_lat'] - a['seg_centroid_lat']
-                //     // })   
-                //     .attr("x", x("1980")) /* d.yearmonth if temporal interval = yearmonth */
-                //     .attr("y", function(d) { return y(d.seg_id_nat) }) /* d.seg_id_nat */
-                //     .attr("rx", 1)
-                //     .attr("ry", 1)
-                //     .attr("width", width)
-                //     .attr("height", y.bandwidth() )
-                //     .attr("class", function(d) { 
-                //         return 'rect seg' + d.seg_id_nat;
-                //     })
-                //     .style("fill", function(d) { 
-                //         if (d.properties['total_count'] > 0) {
-                //             return "#ffffff";                   
-                //         } else {
-                //             return "#ffffff";  /*"None"*/
-                //         }
-                //     })
-                //     // .style("stroke-width", 0.5)
-                //     // .style("stroke", "none")
-                //     .style("opacity", function(d) {
-                //         if (d.properties['total_count'] > 0) {
-                //             return 0;                   
-                //         } else {
-                //             return 1; 
-                //         }
-                //     })
-                //     // .on("click", function(d){
-                //     //     clickRectSpatial(d, tooltip);
-                //     // })
-                //     .on("mouseover", function(d) {
-                //         mouseoverSpatial(d, tooltip);
-                //     })
-                //     .on("mousemove", function(d) {
-                //         position = d3.mouse(this);
-                //         mousemoveRectSpatial(d, tooltip, position);
-                //     })
-                //     .on("mouseleave", function(d) {
-                //         mouseleaveSpatial(d, tooltip);
-                //     })
-
-            // var matrixTemporalRectangles = svgMatrix.selectAll('matrixTempRects')
-            //         .data(data)
-            //         .enter()
-            //         .append("rect")
-
-
-
-
-            // .data(data, function(d) {return d.yearmonth +':'+ d.seg_id_nat;}) /* d.yearmonth if temporal interval = yearmonth */
-            // .enter()
-            // .append("rect")
-            //     .attr("x", function(d) {
-            //         if (d.total_obs > 0){
-            //             return x(d.yearmonth)
-            //         } else {
-            //             return x("1980-01")
-            //         }                 
-            //     }) /* d.yearmonth if temporal interval = yearmonth */
-            //     .attr("y", function(d) { return y(d.seg_id_nat) })
-            //     .attr("rx", 1)
-            //     .attr("ry", 1)
-            //     .attr("width", function(d) {
-            //         if (d.total_obs > 0) {
-            //             return x.bandwidth()
-            //         } else {
-            //             return width
-            //         }
-            //     })
-            //     .attr("height", y.bandwidth() )
-            //     .attr("class", function(d) { 
-            //         return 'cell seg' + d.seg_id_nat;
-            //     })
-            //     .style("fill", function(d) { 
-            //         if (d.total_obs > 0) {
-            //             if (d.obs_count > 0) {
-            //                 // return "black"
-            //                 return myColor(d.obs_count);
-            //             } else {
-            //                 return "None";
-            //             }                    
-            //         } else {
-            //             return "#ffffff";  /*"None"*/
-            //         }
-            //     })
-            //     .style("stroke-width", 0.5)
-            //     .style("stroke", "none")
-            //     .style("opacity", 0.8)
-            // .on("mouseover", mouseover)
-            // .on("mousemove", mousemove)
-            // .on("mouseleave", mouseleave)
-    
+        // add the rectangles
+        createMatrixRectangles(expressed, csv_matrix, csv_annual_count, segments)
 
         // draw x axes
         svgMatrix.append("g")
@@ -624,94 +474,139 @@
             .style("font-size", 0)
             .attr("transform", "translate(" + matrix_width + "," + 0 + ")")
             .call(d3.axisRight(y).tickSize(0))
+
     };
 
     // *********************************************************************//
-    function createMatrixRectangles(expressed, csv_matrix, segments) {
+    function createMatrixRectangles(expressed, csv_matrix, csv_annual_count, segments) {
+        console.log("createMatrixRectangles:")
+        console.log(segments)
         
+        
+        console.log(expressed)
+
         // create matrix recangles variable
-        var svgMatrix = d3.select(".transformedMatrix")
-        var matrixRectangles = svgMatrix.selectAll('matrixRects')
+        var transformedMatrix = d3.select(".transformedMatrix")
+        // var matrixRectangles = svgMatrix.selectAll('matrixRect')
 
+        // read in data
+        var myGroups = d3.map(csv_matrix, function(d){return d[timestep];}).keys() /* d.yearmonth if temporal interval = yearmonth */
+        var myVars = d3.map(csv_matrix, function(d){return d.seg_id_nat;}).keys() /* d.seg_id_nat */
 
+        // var temporalCountMin = Math.round(Math.min(...domainArrayTemporalCounts));
+        // console.log(temporalCountMin)
+
+        // build x scales
+        var xscale = d3.scaleBand()
+            .range([0,matrix_width])
+            .domain(myGroups)
+            .padding(0.05);
+
+        // build y scales
+        var yscale = d3.scaleBand()
+            .range([matrix_height, 0])
+            .domain(myVars)
+            .padding(0.05);
+
+        // create a tooltip
+        var tooltip = d3.select("#matrixChart")
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        // .style("background-color", "white")
+        // .style("border", "solid")
+        // .style("border-width", "2px")
+        // .style("border-radius", "5px")
+        .style("padding", "5px")
+
+        // build rectangles
         if (expressed == 'Space') {
-            // read in data
-            var myGroups = d3.map(csv_matrix, function(d){return d[timestep];}).keys() /* d.yearmonth if temporal interval = yearmonth */
-            var myVars = d3.map(csv_matrix, function(d){return d.seg_id_nat;}).keys() /* d.seg_id_nat */
 
-            // var temporalCountMin = Math.round(Math.min(...domainArrayTemporalCounts));
-            // console.log(temporalCountMin)
-
-            // build x scales
-            var xscale = d3.scaleBand()
-                .range([0,matrix_width])
-                .domain(myGroups)
-                .padding(0.05);
-
-            // build y scales
-            var yscale = d3.scaleBand()
-                .range([matrix_height, 0])
-                .domain(myVars)
-                .padding(0.05);
-
-            // create a tooltip
-            var tooltip = d3.select("#matrixChart")
-                .append("div")
-                .style("opacity", 0)
-                .attr("class", "tooltip")
-                // .style("background-color", "white")
-                // .style("border", "solid")
-                // .style("border-width", "2px")
-                // .style("border-radius", "5px")
-                .style("padding", "5px")
-
-
-            matrixRectangles.data(segments) /*  */
-            .enter()
-            .append("rect")
-                // .sort(function(a,b){
-                //     return b['seg_centroid_lat'] - a['seg_centroid_lat']
-                // })   
-                .attr("x", xscale("1980")) /* d.yearmonth if temporal interval = yearmonth */
-                .attr("y", function(d) { return yscale(d.seg_id_nat) }) /* d.seg_id_nat */
-                .attr("rx", 1)
-                .attr("ry", 1)
-                .attr("width", matrix_width)
-                .attr("height", yscale.bandwidth() )
-                .attr("class", function(d) { 
-                    return 'rect seg' + d.seg_id_nat;
-                })
-                .style("fill", function(d) { 
-                    if (d.properties['total_count'] > 0) {
-                        return "#ffffff";                   
-                    } else {
-                        return "#ffffff";  /*"None"*/
-                    }
-                })
-                // .style("stroke-width", 0.5)
-                // .style("stroke", "none")
-                .style("opacity", function(d) {
-                    if (d.properties['total_count'] > 0) {
-                        return 0;                   
-                    } else {
-                        return 1; 
-                    }
-                })
-                // .on("click", function(d){
-                //     clickRectSpatial(d, tooltip);
-                // })
-                .on("mouseover", function(d) {
-                    mouseoverSpatial(d, tooltip);
-                })
-                .on("mousemove", function(d) {
-                    position = d3.mouse(this);
-                    mousemoveRectSpatial(d, tooltip, position);
-                })
-                .on("mouseleave", function(d) {
-                    mouseleaveSpatial(d, tooltip);
-                })
-        } else {
+            // transformedMatrix.selectAll('matrixRect.temporal').remove()
+            // svgMatrix.selectAll('.matrixRect.temporal').remove
+            
+            // var matrixRectangles = svgMatrix.selectAll('matrixRect')
+            // var props = segments.properties
+            // console.log("props:")
+            // console.log(props)
+            var matrixRectangles = transformedMatrix.selectAll('matrixRect.spatial')
+                .data(segments) /*  */
+                matrixRectangles.exit().remove(); //remove unneeded rectangles
+                matrixRectangles.enter().append('rect')
+                    .attr("x", xscale("1980")) /* d.yearmonth if temporal interval = yearmonth */
+                    .attr("y", function(d) { return yscale(d.seg_id_nat) }) /* d.seg_id_nat */
+                    .attr("rx", 1)
+                    .attr("ry", 1)
+                    .attr("width", matrix_width)
+                    .attr("height", yscale.bandwidth() )
+                    .attr("class", function(d) { 
+                        return 'matrixRect spatial seg' + d.seg_id_nat;
+                    })
+                    .style("fill", function(d) { 
+                        if (d.properties.total_count > 0) {
+                            return "#ffffff";                   
+                        } else {
+                            return "#ffffff";  /*"None"*/
+                        }
+                    })
+                    .style("stroke-width", 0.5)
+                    .style("stroke", "none")
+                    .style("opacity", function(d) {
+                        if (d.properties.total_count > 0) {
+                            return 0;                   
+                        } else {
+                            return 1; 
+                        }
+                    })
+                    // .on("click", function(d){
+                    //     clickRectSpatial(d, tooltip);
+                    // })
+                    .on("mouseover", function(d) {
+                        mouseoverSpatial(d, tooltip);
+                    })
+                    .on("mousemove", function(d) {
+                        position = d3.mouse(this);
+                        mousemoveRectSpatial(d, tooltip, position);
+                    })
+                    .on("mouseleave", function(d) {
+                        mouseleaveSpatial(d, tooltip);
+                    })
+        } else if (expressed == 'Time') {
             console.log('The selected dimension should be time and is: ' + expressed)
+
+            // svgMatrix.selectAll('.matrixRect.spatial').remove
+            // var spatialRectangles = transformedMatrix.selectAll('matrixRect.spatial')
+            //     .style("fill", "None")
+
+            var matrixRectangles = transformedMatrix.selectAll('matrixRect.temporal')
+                .data(csv_annual_count) /*  */
+                matrixRectangles.exit().remove(); //remove unneeded rectangles
+                matrixRectangles.enter().append('rect')
+                    .attr("x", function(d){
+                        return xscale(d[timestep])
+                    }) 
+                    .attr("y", 0) /* function(d) { return yscale(0) } */
+                    .attr("rx", 1)
+                    .attr("ry", 1)
+                    .attr("width", xscale.bandwidth())
+                    .attr("height", matrix_height)
+                    .attr("class", function(d) { 
+                        return 'matrixRect temporal time' + d.year;
+                    })
+                    .style("fill", "#ffffff")
+                    .style("stroke-width", 0.5)
+                    .style("stroke", "none")
+                    .style("opacity", 0)
+                    .on("mouseover", function(d) {
+                        mouseoverTemporal(d, tooltip);
+                    })
+                    .on("mousemove", function(d) {
+                        position = d3.mouse(this);
+                        mousemoveRectTemporal(d, tooltip, position);
+                    })
+                    .on("mouseleave", function(d) {
+                        mouseleaveTemporal(d, tooltip);
+                    })
         }
     };
 
@@ -731,48 +626,42 @@
             .html("Segment " + data.seg_id_nat)
             .style("left", position[0]+25 + "px")
             .style("top", position[1]-25 + "px"); /* position[1]+110 */
-
-
-        // var margin = {top: 15, right: 15, bottom: 15, left: 85},
-        //     width = 500 - margin.left - margin.right,
-        //     height = 1300 - margin.top - margin.bottom;
-
-        // var myVars = d3.map(data, function(d){return d.seg_id_nat;}).keys()
-        // console.log(myVars)
-        // var y = d3.scaleBand()
-        //     .range([height, 0])
-        //     .domain(myVars)
-        //     .padding(0.05);
-        
-        // tooltip
-        //     .html("Segment " + myVars.seg_id_nat)
-        //     .style("left", -5 + "px")
-        //     .style("top", 0 + "px")
-        //     .style("top", function(myVars){
-        //         return y(myVars.seg_id_nat) + "px"
-        //     });
     };
+    
+    // *********************************************************************//
+    function mousemoveRectTemporal(data, tooltip, position) {
+        // console.log(data.properties.total_count)
+        xoffset = position[0]+25
+        yoffset = position[1]-5
+        tooltip
+            .html(data.year)
+            .style("left", xoffset + "px")
+            .style("top", yoffset + "px");
+    };
+
 
     // *********************************************************************//
     function mouseoverSpatial(data, tooltip) {
+        console.log("mouseover data: " + data.properties)
+
         tooltip
             .style("opacity", 1);
-        d3.selectAll(".rect")
+        d3.selectAll(".matrixRect")
             .style("opacity", 0.6)
             .style("stroke-width", 1);
-        d3.selectAll(".rect.seg" + data.seg_id_nat)
+        d3.selectAll(".matrixRect.seg" + data.seg_id_nat)
             // .style("stroke", "red")
             .style("stroke-width", 0.5)
             // .style("fill", "#ffffff")
             .style("opacity", function(data) {
-                if (data.properties['total_count'] > 0) {
+                if (data.properties.total_count > 0) {
                     return 0;                   
                 } else {
                     return 1;
                 }
             })
             .style("stroke", function(data) {
-                if (data.properties['total_count'] > 0) {
+                if (data.properties.total_count > 0) {
                     return "None";                   
                 } else {
                     return "red";
@@ -791,15 +680,38 @@
     };
 
     // *********************************************************************//
-    function mouseleaveSpatial(data, tooltip) {
+    function mouseoverTemporal(data, tooltip) {
         tooltip
-        .style("opacity", 0)
-        d3.selectAll(".rect") /* .rect.seg" + data.seg_id_nat */
+            .style("opacity", 1);
+        d3.selectAll(".matrixRect")
+            .style("opacity", 0.6)
+            .style("stroke-width", 0.5);
+        d3.selectAll(".matrixRect.time" + data.year)
+            .style("stroke-width", 0.5)
+            .style("opacity", 0)
+        d3.selectAll(".delaware_bay")
+            .style("fill", "#bdc8db")
+        d3.selectAll(".river_segments")
+            .style("stroke", "#bdc8db")
+        // d3.selectAll(".river_segments.seg" + data.year)
+        //     .style("stroke", "red")
+        //     .attr("opacity", 1)
+        //     .attr("filter", "url(#shadow1)")
+        //     .raise()
+            
+    };
+
+    // *********************************************************************//
+    function mouseleaveSpatial(data, tooltip) {
+        console.log("mouseleave data: " + data.properties)
+        tooltip
+            .style("opacity", 0)
+        d3.selectAll(".matrixRect") /* .matrixRect.seg" + data.seg_id_nat */
             .style("stroke", "none")
             .style("fill", "#ffffff")
             .style("stroke-width", 0.5)
             .style("opacity", function(data) {
-                if (data.properties['total_count'] > 0) {
+                if (data.properties.total_count > 0) {
                     return 0;                   
                 } else {
                     return 1;
@@ -819,8 +731,27 @@
     };
 
     // *********************************************************************//
+    function mouseleaveTemporal(data, tooltip) {
+        tooltip
+            .style("opacity", 0)
+        d3.selectAll(".matrixRect") 
+            .style("stroke", "none")
+            .style("fill", "#ffffff")
+            .style("stroke-width", 0.5)
+            .style("opacity", 0)
+        d3.selectAll(".delaware_bay")
+            .style("fill", "#6079a3")
+        d3.selectAll(".river_segments")
+            .style("stroke", "#6079a3")
+        d3.selectAll(".river_segments.seg" + data.seg_id_nat)
+            .style("stroke", "#6079a3")
+            .attr("opacity", 1)
+            .attr("filter","None")
+    };
+
+    // *********************************************************************//
     // function clickRectSpatial(data, tooltip) {
-    //     d3.selectAll(".rect.seg" + data.seg_id_nat)
+    //     d3.selectAll(".matrixRect.seg" + data.seg_id_nat)
     //         .style("stroke", "red")
     //         .style("fill", "None")
     //         .style("opacity", 1);
@@ -831,7 +762,9 @@
 
     // *********************************************************************//
     // fuction to create a dropdown menu for attribute selection
-    function createDropdown(select_list, csv_matrix, segments){
+    function createDropdown(select_list, csv_matrix, csv_annual_count, segments){
+        console.log("createDropdown:")
+        console.log(segments)
         // add select element
         var dropdown = d3.select("#matrixChart")
             // append the select element to the body
@@ -841,7 +774,7 @@
             // add event listener
             .on("change", function(){
                 // call listener handler function
-                changeInteractionDimension(this.value, csv_matrix, segments)
+                changeInteractionDimension(this.value, csv_matrix, csv_annual_count, segments)
             });
 
         // add initial option
@@ -868,11 +801,15 @@
     };
 
     // *********************************************************************//
-    function changeInteractionDimension(dimension, csv_matrix, segments){
+    function changeInteractionDimension(dimension, csv_matrix, csv_annual_count, segments){
+        console.log("changeInteractionDimension:")
+        console.log(segments)
+
+
         // reset expressed dimension based on selected dimension
         expressed = dimension;
 
-        createMatrixRectangles(expressed, csv_matrix, segments)
+        createMatrixRectangles(expressed, csv_matrix, csv_annual_count, segments)
 
     };
 
