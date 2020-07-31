@@ -419,9 +419,9 @@
 
         // color scale
         var myColor = d3.scaleSequential()
-            .interpolator(d3.interpolateViridis) /* interpolatePlasma */
-            .domain([temporalCountMax,1]) // if INVERTING color scale
-            // .domain([1, temporalCountMax]) // if NOT INVERTING color scale
+            .interpolator(d3.interpolatePlasma) /* interpolatePlasma */
+            // .domain([temporalCountMax,1]) // if INVERTING color scale
+            .domain([1, temporalCountMax]) // if NOT INVERTING color scale
               
         // add the squares
         var matrixSquares = svgMatrix.selectAll('matrixSqs')
@@ -467,11 +467,13 @@
         // draw x axes
         svgMatrix.append("g")
             .style("font-size", 10)
+            .attr("class", "matrixAxis")
             .attr("transform", "translate(" + 0 + "," + matrix_height + ")")
             .call(d3.axisBottom(x).tickSize(0).tickValues(['1980', '1990', '2000', '2010', '2019'])) /* '1980-01', '1990-01', '2000-01', '2010-01', '2019-01' */
             // .select(".domain").remove()
         svgMatrix.append("g")
             .style("font-size", 0)
+            .attr("class", "matrixAxis")
             .attr("transform", "translate(" + 0 + "," + 0 + ")")
             .call(d3.axisTop(x).tickSize(0))
             // .select(".domain").remove()
@@ -479,10 +481,12 @@
         // draw y axes
         svgMatrix.append("g")
             .style("font-size", 0)
+            .attr("class", "matrixAxis")
             .call(d3.axisLeft(y).tickSize(0))
             // .select(".domain").remove()
         svgMatrix.append("g")
             .style("font-size", 0)
+            .attr("class", "matrixAxis")
             .attr("transform", "translate(" + matrix_width + "," + 0 + ")")
             .call(d3.axisRight(y).tickSize(0))
 
@@ -546,13 +550,13 @@
             })
             .style("fill", function(d) { 
                 if (d.properties.total_count > 0) {
-                    return "#ffffff";                   
+                    return "black";                   
                 } else {
-                    return "#ffffff";  /*"None"*/
+                    return "black";  /*"None"*/
                 }
             })
             .style("stroke-width", 1)
-            .style("stroke", "#ffffff")
+            .style("stroke", "black")
             .style("opacity", function(d) {
                 if (d.properties.total_count > 0) {
                     return 0;                   
@@ -590,9 +594,9 @@
             .attr("class", function(d) { 
                 return 'matrixTemporalRect time' + d.year;
             })
-            .style("fill", "#ffffff")
+            .style("fill", "black")
             .style("stroke-width", 1)
-            .style("stroke", "#ffffff")
+            .style("stroke", "black")
             .style("opacity", 0)
             .on("mouseover", function(d) {
                 mouseover(d, tooltip);
@@ -679,10 +683,10 @@
                 d3.selectAll(".matrixSpatialRect.seg" + data.seg_id_nat)
                     // .style("stroke", "red")
                     .style("stroke-width", 0.5)
-                    // .style("fill", "#ffffff")
+                    .style("fill", "None")
                     .style("opacity", function(data) {
                         if (data.properties.total_count > 0) { //properties.total_count
-                            return 0;                   
+                            return 1;                   
                         } else {
                             return 1;
                         }
@@ -691,16 +695,16 @@
                         if (data.properties.total_count > 0) {
                             return "None";                   
                         } else {
-                            return "red";
+                            return "#ffffff";
                         }
                     })
                     .raise();
                 d3.selectAll(".delaware_bay")
-                    .style("fill", "#bdc8db")
+                    .style("fill", "#172c4f")
                 d3.selectAll(".river_segments")
-                    .style("stroke", "#bdc8db")
+                    .style("stroke", "#172c4f")
                 d3.selectAll(".river_segments.seg" + data.seg_id_nat)
-                    .style("stroke", "red")
+                    .style("stroke", "#ffffff")
                     .attr("opacity", 1)
                     .attr("filter", "url(#shadow1)")
                     .raise()
@@ -767,11 +771,11 @@
                     .style("stroke-width", 0.5)
                     .style("opacity", 0)
                 d3.selectAll(".delaware_bay")
-                    .style("fill", "#bdc8db")
+                    .style("fill", "#172c4f")
                 d3.selectAll(".river_segments")
-                    .style("stroke", "#bdc8db")
+                    .style("stroke", "#172c4f")
                 d3.selectAll(".river_segments.year" + data.year)
-                    .style("stroke", "red")
+                    .style("stroke", "#ffffff")
                     .attr("opacity", 1)
                     // .attr("filter", "url(#shadow1)")
                     .raise()
@@ -810,14 +814,14 @@
             console.log(data)
 
             d3.selectAll(".matrixTemporalRect")
-                .style("fill", "#ffffff")
+                .style("fill", "black")
 
             if (data.properties) {
                 tooltip
                     .style("opacity", 0)
                 d3.selectAll(".matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
-                    .style("stroke", "#ffffff")
-                    .style("fill", "#ffffff")
+                    .style("stroke", "black")
+                    .style("fill", "black")
                     .style("stroke-width", 1)
                     .style("opacity", 0)
                 d3.selectAll(".matrixSpatialRect" + data.seg_id_nat)
@@ -869,14 +873,14 @@
             console.log(data)
 
             d3.selectAll(".matrixSpatialRect")
-                .style("fill", "#ffffff")
+                .style("fill", "black")
 
             if (data.total_annual_count)  {
                 tooltip
                     .style("opacity", 0)
                 d3.selectAll(".matrixTemporalRect") 
-                    .style("stroke", "#ffffff")
-                    .style("fill", "#ffffff")
+                    .style("stroke", "black")
+                    .style("fill", "black")
                     .style("stroke-width", 1)
                     .style("opacity", 0)
                 d3.selectAll(".delaware_bay")

@@ -2,12 +2,13 @@
 .matrix {
   stroke-width: 0.5px;
   stroke-linejoin: round;
+  /* box-shadow: 10 10 10 10; */
 }
 
 body {
   margin-bottom: 0px;
   font-family: sans-serif;
-  /* background-color: black; */
+  background-color: black;
 }
 
 .delaware_bay {
@@ -29,6 +30,7 @@ body {
   font-size: 13px;
 }
 
+
 .dropdown {
   width: 45%;
   position: relative;
@@ -46,6 +48,7 @@ body {
 }
 
 .tooltip {
+  color: #b6b6b6;
   font-family: sans-serif;
   font-size: 0.7em;
   font-weight: bold;
