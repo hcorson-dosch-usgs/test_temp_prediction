@@ -38,7 +38,7 @@ body {
   font-family: sans-serif;
   font-size: 0.7em;
   font-weight: bold;
-  color: #bd0d0d;
+  color: #44095c;
   padding: 2px;
   border: 1px solid #999;
   box-shadow: 1px 1px 4px #b3b3b3; /* 2px 2px 4px #999 */
@@ -47,6 +47,7 @@ body {
 .tooltip {
   font-family: sans-serif;
   font-size: 0.7em;
+  font-weight: bold;
   /* margin: 0 2px 0 0; */
   /* position: absolute; */
   /* height: 33px; */

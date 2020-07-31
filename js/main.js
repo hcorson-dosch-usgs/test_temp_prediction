@@ -6,7 +6,7 @@
     var flowArray = ['avg_ann_flow']
 
     // initial attribute
-    var expressed = 'Space';
+    var expressed = 'Time';
 
     // begin script when window loads
     window.onload = setMap();
@@ -316,7 +316,16 @@
             .append("path")
             // assign class for styling
             .attr("class", function(d){
-                return "river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
+                var seg_class = 'river_segments seg'
+                seg_class += d.seg_id_nat
+                for (key in d.properties.year_count) {
+                    if (d.properties.year_count[key]) {
+                        seg_class += " year" + key
+                    }
+                }
+                return seg_class
+
+                // return "river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
             })
             // add filter
             // .attr("filter", "url(#shadow1)")
@@ -410,7 +419,7 @@
 
         // color scale
         var myColor = d3.scaleSequential()
-            .interpolator(d3.interpolateReds) /* interpolatePlasma */
+            .interpolator(d3.interpolateBuPu) /* interpolatePlasma */
             .domain([temporalCountMax,1])
               
         // add the squares
@@ -444,8 +453,11 @@
             .style("fill", function(d) {
                 return myColor(d.obs_count);
             })
-            .style("stroke-width", 0.5)
-            .style("stroke", "None")
+            .style("stroke-width", 0)
+            .style("stroke", "None") //"None"
+            // .style("stroke", function(d){
+            //     return myColor(d.obs_count);
+            // })
             .style("opacity", 1);
 
         // add the rectangles
@@ -538,8 +550,8 @@
                     return "#ffffff";  /*"None"*/
                 }
             })
-            .style("stroke-width", 0.5)
-            .style("stroke", "None")
+            .style("stroke-width", 1)
+            .style("stroke", "#ffffff")
             .style("opacity", function(d) {
                 if (d.properties.total_count > 0) {
                     return 0;                   
@@ -578,8 +590,8 @@
                 return 'matrixTemporalRect time' + d.year;
             })
             .style("fill", "#ffffff")
-            .style("stroke-width", 0.5)
-            .style("stroke", "None")
+            .style("stroke-width", 1)
+            .style("stroke", "#ffffff")
             .style("opacity", 0)
             .on("mouseover", function(d) {
                 mouseover(d, tooltip);
@@ -591,98 +603,6 @@
             .on("mouseleave", function(d) {
                 mouseleave(d, tooltip);
             })
-
-        // // build rectangles
-        // if (expressed == 'Space') {
-
-        //     // transformedMatrix.selectAll('matrixRect.temporal').remove()
-        //     // transformedMatrix.selectAll('matrixRect.temporal').remove()
-        //     // svgMatrix.selectAll('.matrixRect.temporal').remove
-            
-        //     // var matrixRectangles = svgMatrix.selectAll('matrixRect')
-        //     // var props = segments.properties
-        //     // console.log("props:")
-        //     // console.log(props)
-        //     // var matrixRectangles = transformedMatrix.selectAll('.matrixRect') // matrixRect.spatial
-        //     //     .data(segments) /*  */
-        //     //     matrixRectangles.exit().remove(); //remove unneeded rectangles
-        //     //     matrixRectangles.enter().append('rect')
-        //     //         .attr("x", xscale("1980")) /* d.yearmonth if temporal interval = yearmonth */
-        //     //         .attr("y", function(d) { return yscale(d.seg_id_nat) }) /* d.seg_id_nat */
-        //     //         .attr("rx", 1)
-        //     //         .attr("ry", 1)
-        //     //         .attr("width", matrix_width)
-        //     //         .attr("height", yscale.bandwidth() )
-        //     //         .attr("class", function(d) { 
-        //     //             return 'matrixRect spatial seg' + d.seg_id_nat;
-        //     //         })
-        //     //         .style("fill", function(d) { 
-        //     //             if (d.properties.total_count > 0) {
-        //     //                 return "#ffffff";                   
-        //     //             } else {
-        //     //                 return "#ffffff";  /*"None"*/
-        //     //             }
-        //     //         })
-        //     //         .style("stroke-width", 0.5)
-        //     //         .style("stroke", "None")
-        //     //         .style("opacity", function(d) {
-        //     //             if (d.properties.total_count > 0) {
-        //     //                 return 0;                   
-        //     //             } else {
-        //     //                 return 1; 
-        //     //             }
-        //     //         })
-        //     //         // .on("click", function(d){
-        //     //         //     clickRectSpatial(d, tooltip);
-        //     //         // })
-        //     //         .on("mouseover", function(d) {
-        //     //             mouseover(d, tooltip);
-        //     //         })
-        //     //         .on("mousemove", function(d) {
-        //     //             position = d3.mouse(this);
-        //     //             mousemoveRect(d, tooltip, position);
-        //     //         })
-        //     //         .on("mouseleave", function(d) {
-        //     //             mouseleave(d, tooltip);
-        //     //         })
-        // } else if (expressed == 'Time') {
-        //     console.log('The selected dimension should be time and is: ' + expressed)
-
-        //     // transformedMatrix.selectAll('matrixRect.spatial').remove()
-        //     // svgMatrix.selectAll('.matrixRect.spatial').remove
-        //     // var spatialRectangles = transformedMatrix.selectAll('matrixRect.spatial')
-        //     //     .style("fill", "None")
-
-        //     // var matrixRectangles = transformedMatrix.selectAll('.matrixRect') // matrixRect.temporal
-        //     //     .data(csv_annual_count) /*  */
-        //     //     matrixRectangles.exit().remove(); //remove unneeded rectangles
-        //     //     matrixRectangles.enter().append('rect')
-        //     //         .attr("x", function(d){
-        //     //             return xscale(d[timestep])
-        //     //         }) 
-        //     //         .attr("y", 0) /* function(d) { return yscale(0) } */
-        //     //         .attr("rx", 1)
-        //     //         .attr("ry", 1)
-        //     //         .attr("width", xscale.bandwidth())
-        //     //         .attr("height", matrix_height)
-        //     //         .attr("class", function(d) { 
-        //     //             return 'matrixRect temporal time' + d.year;
-        //     //         })
-        //     //         .style("fill", "#ffffff")
-        //     //         .style("stroke-width", 0.5)
-        //     //         .style("stroke", "None")
-        //     //         .style("opacity", 0)
-        //     //         .on("mouseover", function(d) {
-        //     //             mouseover(d, tooltip);
-        //     //         })
-        //     //         .on("mousemove", function(d) {
-        //     //             position = d3.mouse(this);
-        //     //             mousemoveRect(d, tooltip, position);
-        //     //         })
-        //     //         .on("mouseleave", function(d) {
-        //     //             mouseleave(d, tooltip);
-        //     //         })
-        // }
     };
 
     // *********************************************************************//
@@ -741,6 +661,7 @@
 
             d3.selectAll(".matrixTemporalRect")
                 .style("fill", "None")
+                .style("stroke", "None")
 
             if (data.properties) {
                 tooltip
@@ -748,11 +669,11 @@
                 // d3.selectAll(".matrixTemporalRect")
                 //     .style("opacity", 0)   
                 d3.selectAll(".matrixSpatialRect")
-                    .style("opacity", 0.6)
+                    .style("opacity", 0.8)
                     .style("stroke-width", 1);
                 d3.selectAll(".matrixSpatialRect.seg" + data.seg_id_nat)
                     // .style("stroke", "red")
-                    .style("stroke-width", 0.5)
+                    .style("stroke-width", 1)
                     // .style("fill", "#ffffff")
                     .style("opacity", function(data) {
                         if (data.properties.total_count > 0) { //properties.total_count
@@ -767,7 +688,8 @@
                         } else {
                             return "red";
                         }
-                    });
+                    })
+                    .raise();
                 d3.selectAll(".delaware_bay")
                     .style("fill", "#bdc8db")
                 d3.selectAll(".river_segments")
@@ -824,6 +746,7 @@
 
             d3.selectAll(".matrixSpatialRect")
                 .style("fill", "None")
+                .style("stroke", "None")
 
             if (data.total_annual_count) {
                 tooltip
@@ -833,7 +756,7 @@
                 // d3.selectAll(".cell.timestep" + data.year)
                 // d3.selectAll(".matrixSpatialRect")
                 d3.selectAll(".matrixTemporalRect")
-                    .style("opacity", 0.6)
+                    .style("opacity", 0.8)
                     .style("stroke-width", 0.5);
                 d3.selectAll(".matrixTemporalRect.time" + data.year)
                     .style("stroke-width", 0.5)
@@ -842,6 +765,11 @@
                     .style("fill", "#bdc8db")
                 d3.selectAll(".river_segments")
                     .style("stroke", "#bdc8db")
+                d3.selectAll(".river_segments.year" + data.year)
+                    .style("stroke", "red")
+                    .attr("opacity", 1)
+                    // .attr("filter", "url(#shadow1)")
+                    .raise()
 
 
             } else {
@@ -883,10 +811,12 @@
                 tooltip
                     .style("opacity", 0)
                 d3.selectAll(".matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
-                    .style("stroke", "None")
+                    .style("stroke", "#ffffff")
                     .style("fill", "#ffffff")
-                    .style("stroke-width", 0.5)
+                    .style("stroke-width", 1)
                     .style("opacity", 0)
+                d3.selectAll(".matrixSpatialRect" + data.seg_id_nat)
+                    .lower()
                 d3.selectAll(".delaware_bay")
                     .style("fill", "#6079a3")
                 d3.selectAll(".river_segments")
@@ -895,6 +825,9 @@
                     .style("stroke", "#6079a3")
                     .attr("opacity", 1)
                     .attr("filter","None")
+                    .lower()
+                d3.selectAll("g")
+                    .raise()
             } else {
                console.log("spatial mouseleave, temporal data: ")
                console.log(data)
@@ -937,14 +870,21 @@
                 tooltip
                     .style("opacity", 0)
                 d3.selectAll(".matrixTemporalRect") 
-                    .style("stroke", "None")
+                    .style("stroke", "#ffffff")
                     .style("fill", "#ffffff")
-                    .style("stroke-width", 0.5)
+                    .style("stroke-width", 1)
                     .style("opacity", 0)
                 d3.selectAll(".delaware_bay")
                     .style("fill", "#6079a3")
                 d3.selectAll(".river_segments")
                     .style("stroke", "#6079a3")
+                    // .attr("opacity", 1)
+                    // .attr("filter","None")
+                d3.selectAll(".river_segments.year" + data.year)
+                    .style("stroke", "#6079a3")
+                    .attr("opacity", 1)
+                    // .attr("filter","None")
+                    .lower()
                 
             } else {
                 console.log("temporal mouseleave, spatial data:")
@@ -1010,7 +950,7 @@
             // ensure that users cannot select it
             .attr("disabled", "true")
             // add an affordance to let users know they can interact with the dropdown menu
-            .text("Select Dimension for Interaction");
+            .text("Interaction Dimension: " + expressed);
 
         // add attribute name options
         var attrOptions = dropdown.selectAll("attrOptions")
@@ -1035,7 +975,7 @@
         // reset expressed dimension based on selected dimension
         expressed = dimension;
 
-        createMatrixRectangles(csv_matrix, csv_annual_count, segments)
+        // createMatrixRectangles(csv_matrix, csv_annual_count, segments)
 
     };
 
