@@ -6,7 +6,7 @@
     var flowArray = ['avg_ann_flow']
 
     // initial attribute
-    var expressed = 'Time';
+    var expressed = 'Space';
 
     // begin script when window loads
     window.onload = setMap();
@@ -55,6 +55,9 @@
         
         // parallelize asynchronous data loading d3.json("data/Segments_subset_4per_smooth.json"),
         var promises = [d3.csv("data/segment_maflow.csv"),
+                        // d3.csv("data/segment_year_counts_8019.csv"),
+                        // d3.csv("data/segment_year_counts_order13_8019.csv"),
+                        // d3.csv("data/segment_year_counts_order47_8019.csv"),
                         d3.csv("data/matrix_annual_obs.csv"), /* matrix_segment_yearmonth_counts */
                         d3.csv("data/obs_annual_count.csv"),
                         d3.json("data/segment_geojson.json"),
@@ -67,12 +70,16 @@
         // Place callback function within setMap to make use of local variables
         function callback(data) {
             csv_flow = data[0];
+            // csv_streamgraph = data[1];
+            // csv_stackedarea = data[2];
+            // csv_stackedarea2 = data[3];
             csv_matrix = data[1];
             csv_annual_count = data[2];
             json_segments = data[3];
             json_obs_stations = data[4];
             json_bay = data[5];
 
+            console.log(map)
             console.log(csv_matrix)
 
             // translate topojsons
@@ -86,6 +93,7 @@
             // check the results
             console.log('segments:')
             console.log(segments);
+            console.log(stations);
 
             // stroke width scale
             var widthScale = makeWidthScale(csv_flow);
@@ -344,8 +352,8 @@
                 position = d3.mouse(this);
                 mousemoveSegSpatial(d, tooltip, position);
             })
-            .on("mouseout", function(d) {
-                mouseout(d, tooltip);
+            .on("mouseleave", function(d) {
+                mouseleave(d, tooltip);
             });
             // // set color based on colorScale function
             // .style("stroke", function(d){
@@ -357,7 +365,7 @@
             //     };
             // });
         
-        // // add drb stations to map
+        // // add drb segments to map
         // var drb_stations = map.selectAll(".obs_stations")
         //     // bind segments to each element to be created
         //     .data(stations)
@@ -440,19 +448,19 @@
         var x = d3.scaleBand()
             .range([0,matrix_width])
             .domain(myGroups)
-            .padding(0.1);
+            .padding(0.05);
 
         // build y scales
         var y = d3.scaleBand()
             .range([matrix_height, 0])
             .domain(myVars)
-            .padding(0.1);
+            .padding(0.05);
 
         // color scale
         var myColor = d3.scaleSequential()
-            .interpolator(d3.interpolatePlasma) /* interpolatePlasma */
-            // .domain([temporalCountMax,1]) // if INVERTING color scale
-            .domain([1, temporalCountMax]) // if NOT INVERTING color scale
+            .interpolator(d3.interpolateViridis) /* interpolatePlasma */
+            .domain([temporalCountMax,1]) // if INVERTING color scale
+            // .domain([1, temporalCountMax]) // if NOT INVERTING color scale
               
         // add the squares
         var matrixSquares = svgMatrix.selectAll('matrixSqs')
@@ -472,8 +480,8 @@
             .attr("y", function(d) { 
                 return y(d.seg_id_nat)
             })
-            // .attr("rx", 1)
-            // .attr("ry", 1 )
+            .attr("rx", 1)
+            .attr("ry", 1 )
             .attr("width", x.bandwidth())
             .attr("x", function(d) {
                return x(d[timestep])
@@ -485,11 +493,11 @@
             .style("fill", function(d) {
                 return myColor(d.obs_count);
             })
-            .style("stroke-width", 0.5)
-            // .style("stroke", "None") //"None"
-            .style("stroke", function(d){
-                return myColor(d.obs_count);
-            })
+            .style("stroke-width", 0)
+            .style("stroke", "None") //"None"
+            // .style("stroke", function(d){
+            //     return myColor(d.obs_count);
+            // })
             .style("opacity", 1);
 
         // add the rectangles
@@ -499,26 +507,22 @@
         svgMatrix.append("g")
             .style("font-size", 10)
             .attr("transform", "translate(" + 0 + "," + matrix_height + ")")
-            .attr("class", "matrixAxis bottom")
             .call(d3.axisBottom(x).tickSize(0).tickValues(['1980', '1990', '2000', '2010', '2019'])) /* '1980-01', '1990-01', '2000-01', '2010-01', '2019-01' */
             // .select(".domain").remove()
         svgMatrix.append("g")
             .style("font-size", 0)
             .attr("transform", "translate(" + 0 + "," + 0 + ")")
-            .attr("class", "matrixAxis top")
             .call(d3.axisTop(x).tickSize(0))
             // .select(".domain").remove()
 
         // draw y axes
         svgMatrix.append("g")
             .style("font-size", 0)
-            .attr("class", "matrixAxis left")
             .call(d3.axisLeft(y).tickSize(0))
             // .select(".domain").remove()
         svgMatrix.append("g")
             .style("font-size", 0)
             .attr("transform", "translate(" + matrix_width + "," + 0 + ")")
-            .attr("class", "matrixAxis right")
             .call(d3.axisRight(y).tickSize(0))
 
     };
@@ -546,13 +550,13 @@
         var xscale = d3.scaleBand()
             .range([0,matrix_width])
             .domain(myGroups)
-            .padding(0.1);
+            .padding(0.05);
 
         // build y scales
         var yscale = d3.scaleBand()
             .range([matrix_height, 0])
             .domain(myVars)
-            .padding(0.1);
+            .padding(0.05);
 
         // create a tooltip
         var tooltip = d3.select("#matrixChart")
@@ -572,8 +576,8 @@
             .append("rect")
             .attr("x", xscale("1980")) /* d.yearmonth if temporal interval = yearmonth */
             .attr("y", function(d) { return yscale(d.seg_id_nat) }) /* d.seg_id_nat */
-            // .attr("rx", 1)
-            // .attr("ry", 1)
+            .attr("rx", 1)
+            .attr("ry", 1)
             .attr("width", matrix_width)
             .attr("height", yscale.bandwidth() )
             .attr("class", function(d) { 
@@ -581,18 +585,18 @@
             })
             .style("fill", function(d) { 
                 if (d.properties.total_count > 0) {
-                    return "#000000"; // "#ffffff"                  
+                    return "#ffffff";                   
                 } else {
-                    return "#000000";  /*"#ffffff"*/
+                    return "#ffffff";  /*"None"*/
                 }
             })
-            .style("stroke-width", 2)
-            .style("stroke", "#000000") // "#ffffff"
+            .style("stroke-width", 1)
+            .style("stroke", "#ffffff")
             .style("opacity", function(d) {
                 if (d.properties.total_count > 0) {
                     return 0;                   
                 } else {
-                    return 0; 
+                    return 1; 
                 }
             })
             // .on("click", function(d){
@@ -605,8 +609,8 @@
                 position = d3.mouse(this);
                 mousemoveRect(d, tooltip, position);
             })
-            .on("mouseout", function(d) {
-                mouseout(d, tooltip);
+            .on("mouseleave", function(d) {
+                mouseleave(d, tooltip);
             })
 
         // revised build of temporal rectangles
@@ -618,16 +622,16 @@
                 return xscale(d[timestep])
             }) 
             .attr("y", 0) /* function(d) { return yscale(0) } */
-            // .attr("rx", 1)
-            // .attr("ry", 1)
+            .attr("rx", 1)
+            .attr("ry", 1)
             .attr("width", xscale.bandwidth())
             .attr("height", matrix_height)
             .attr("class", function(d) { 
                 return 'matrixTemporalRect time' + d.year;
             })
-            .style("fill", "#000000") // "#ffffff"
-            .style("stroke-width", 2)
-            .style("stroke", "#000000") // #ffffff"
+            .style("fill", "#ffffff")
+            .style("stroke-width", 1)
+            .style("stroke", "#ffffff")
             .style("opacity", 0)
             .on("mouseover", function(d) {
                 mouseover(d, tooltip);
@@ -636,8 +640,8 @@
                 position = d3.mouse(this);
                 mousemoveRect(d, tooltip, position);
             })
-            .on("mouseout", function(d) {
-                mouseout(d, tooltip);
+            .on("mouseleave", function(d) {
+                mouseleave(d, tooltip);
             })
     };
 
@@ -646,15 +650,21 @@
         if (expressed == 'Space') {
             // console.log(data.properties.total_count)
             if (data.properties) {
-                var num_obs = data.properties.total_count;
                 yoffset = position[1]+5
                 tooltip
-                    .html(d3.format(',')(num_obs) + "<p>obs.")
+                    .html(data.properties.total_count + "<p>obs.")
                     // .html("Segment " + data.seg_id_nat)
                     .style("left", 10 + "px")
                     .style("top", yoffset + "px")
                     .style("text-align", "right");
             }
+
+            // yoffset = position[1]+7
+            // tooltip
+            //     .html("Segment " + data.seg_id_nat)
+            //     .style("left", -12 + "px")
+            //     .style("top", yoffset + "px");
+
         } else if (expressed = 'Time') {
             if (data.total_annual_count) {
                 xoffset = position[0]+10
@@ -664,15 +674,22 @@
                     .style("left", xoffset + "px")
                     .style("top", yoffset + "px");
             }
+            // console.log(data.properties.total_count)
+
+            // xoffset = position[0]+25
+            // yoffset = position[1]-5
+            // tooltip
+            //     .html(data.year)
+            //     .style("left", xoffset + "px")
+            //     .style("top", yoffset + "px");
         }
     };
 
     // *********************************************************************//
     function mousemoveSegSpatial(data, tooltip, position) {
         if (expressed == 'Space') {
-            var num_obs = data.properties.total_count;
             tooltip
-                .html(d3.format(',')(num_obs) + "<p>obs.")
+                .html(data.properties.total_count + "<p>obs.")
                 // .html("Segment " + data.seg_id_nat)
                 .style("left", position[0]+35 + "px")
                 .style("top", position[1]-25 + "px")
@@ -692,22 +709,16 @@
 
             if (data.properties) {
                 tooltip
-                    .style("color", "#ffffff")
                     .style("opacity", 1);
+                // d3.selectAll(".matrixTemporalRect")
+                //     .style("opacity", 0)   
                 d3.selectAll(".matrixSpatialRect")
                     .style("opacity", 0.8)
-                    .style("stroke-width", 1);
-                d3.selectAll(".cell.segment" + data.seg_id_nat)
-                    .raise()
+                    .style("stroke-width", 0);
                 d3.selectAll(".matrixSpatialRect.seg" + data.seg_id_nat)
-                    // .style("stroke-width", 0.5)
-                    .style("stroke-width", function(data) {
-                        if (data.properties.total_count > 0) { //properties.total_count
-                            return 0;                   
-                        } else {
-                            return 0.5;
-                        }
-                    })
+                    // .style("stroke", "red")
+                    .style("stroke-width", 0.5)
+                    // .style("fill", "#ffffff")
                     .style("opacity", function(data) {
                         if (data.properties.total_count > 0) { //properties.total_count
                             return 0;                   
@@ -719,16 +730,16 @@
                         if (data.properties.total_count > 0) {
                             return "None";                   
                         } else {
-                            return "#ffffff"; //red
+                            return "red";
                         }
                     })
                     .raise();
                 d3.selectAll(".delaware_bay")
-                    .style("fill", "#172c4f")
+                    .style("fill", "#bdc8db")
                 d3.selectAll(".river_segments")
-                    .style("stroke", "#172c4f")
+                    .style("stroke", "#bdc8db")
                 d3.selectAll(".river_segments.seg" + data.seg_id_nat)
-                    .style("stroke", "#ffffff")
+                    .style("stroke", "red")
                     .attr("opacity", 1)
                     .attr("filter", "url(#shadow1)")
                     .raise()
@@ -737,6 +748,41 @@
                 console.log("spatial mouseover, temporal data: ")
                 console.log(data)
             }
+
+            // tooltip
+            //     .style("opacity", 1);
+            // // d3.selectAll(".matrixTemporalRect")
+            // //     .style("opacity", 0)   
+            // d3.selectAll(".matrixSpatialRect")
+            //     .style("opacity", 0.6)
+            //     .style("stroke-width", 1);
+            // d3.selectAll(".matrixSpatialRect.seg" + data.seg_id_nat)
+            //     // .style("stroke", "red")
+            //     .style("stroke-width", 0.5)
+            //     // .style("fill", "#ffffff")
+            //     .style("opacity", function(data) {
+            //         if (data.properties.total_count > 0) { //properties.total_count
+            //             return 0;                   
+            //         } else {
+            //             return 1;
+            //         }
+            //     })
+            //     .style("stroke", function(data) {
+            //         if (data.properties.total_count > 0) {
+            //             return "None";                   
+            //         } else {
+            //             return "red";
+            //         }
+            //     });
+            // d3.selectAll(".delaware_bay")
+            //     .style("fill", "#bdc8db")
+            // d3.selectAll(".river_segments")
+            //     .style("stroke", "#bdc8db")
+            // d3.selectAll(".river_segments.seg" + data.seg_id_nat)
+            //     .style("stroke", "red")
+            //     .attr("opacity", 1)
+            //     .attr("filter", "url(#shadow1)")
+            //     .raise()
 
         } else if (expressed = 'Time') {
             console.log("temporal mouseover data: ")
@@ -749,17 +795,22 @@
             if (data.total_annual_count) {
                 tooltip
                     .style("opacity", 1);
+                // d3.selectAll(".cell")
+                //     .style("opacity", 0.6)
+                // d3.selectAll(".cell.timestep" + data.year)
+                // d3.selectAll(".matrixSpatialRect")
                 d3.selectAll(".matrixTemporalRect")
                     .style("opacity", 0.8)
-                    .style("stroke-width", 2);
+                    .style("stroke-width", 0.5);
                 d3.selectAll(".matrixTemporalRect.time" + data.year)
+                    .style("stroke-width", 0.5)
                     .style("opacity", 0)
                 d3.selectAll(".delaware_bay")
-                    .style("fill", "#172c4f")
+                    .style("fill", "#bdc8db")
                 d3.selectAll(".river_segments")
-                    .style("stroke", "#172c4f")
+                    .style("stroke", "#bdc8db")
                 d3.selectAll(".river_segments.year" + data.year)
-                    .style("stroke", "#ffffff")
+                    .style("stroke", "red")
                     .attr("opacity", 1)
                     // .attr("filter", "url(#shadow1)")
                     .raise()
@@ -770,34 +821,45 @@
                 console.log(data)
             }
 
+            // tooltip
+            //     .style("opacity", 1);
+            // // d3.selectAll(".cell")
+            // //     .style("opacity", 0.6)
+            // // d3.selectAll(".cell.timestep" + data.year)
+            // // d3.selectAll(".matrixSpatialRect")
+            // d3.selectAll(".matrixTemporalRect")
+            //     .style("opacity", 0.6)
+            //     .style("stroke-width", 0.5);
+            // d3.selectAll(".matrixTemporalRect" + data.year)
+            //     .style("stroke-width", 0.5)
+            //     .style("opacity", 0)
+            // d3.selectAll(".delaware_bay")
+            //     .style("fill", "#bdc8db")
+            // d3.selectAll(".river_segments")
+            //     .style("stroke", "#bdc8db")
         }
 
             
     };
 
     // *********************************************************************//
-    function mouseout(data, tooltip) {
+    function mouseleave(data, tooltip) {
         if (expressed == 'Space') {
-            console.log("spatial mouseout data: ")
+            console.log("spatial mouseleave data: ")
             console.log(data)
 
             d3.selectAll(".matrixTemporalRect")
-                .style("fill", "#000000")
-                .style("stroke", "#000000")
-                .style("stroke-width", 2) 
+                .style("fill", "#ffffff")
 
             if (data.properties) {
                 tooltip
                     .style("opacity", 0)
                 d3.selectAll(".matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
-                    .style("stroke", "None")    
-                    .style("stroke", "#000000") // "#ffffff"
-                    .style("fill", "#000000") // "#ffffff"
-                    .style("stroke-width", 2)
+                    .style("stroke", "#ffffff")
+                    .style("fill", "#ffffff")
+                    .style("stroke-width", 1)
                     .style("opacity", 0)
                 d3.selectAll(".matrixSpatialRect" + data.seg_id_nat)
-                    .lower()
-                d3.selectAll(".cell.segment" + data.seg_id_nat)
                     .lower()
                 d3.selectAll(".delaware_bay")
                     .style("fill", "#6079a3")
@@ -811,26 +873,50 @@
                 d3.selectAll("g")
                     .raise()
             } else {
-               console.log("spatial mouseout, temporal data: ")
+               console.log("spatial mouseleave, temporal data: ")
                console.log(data)
             }
 
+            // tooltip
+            //     .style("opacity", 0)
+            // d3.selectAll(".matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
+            //     .style("stroke", "None")
+            //     .style("fill", "#ffffff")
+            //     .style("stroke-width", 0.5)
+            //     .style("opacity", 0)
+            //     // .style("opacity", function(data) {
+            //     //     if (data.properties.total_count > 0) {
+            //     //         return 0;                   
+            //     //     } else {
+            //     //         return 1;
+            //     //     }
+            //     // })
+            //     // .transition()
+            //     // .delay(20)
+            //     // .duration(500)
+            // d3.selectAll(".delaware_bay")
+            //     .style("fill", "#6079a3")
+            // d3.selectAll(".river_segments")
+            //     .style("stroke", "#6079a3")
+            // d3.selectAll(".river_segments.seg" + data.seg_id_nat)
+            //     .style("stroke", "#6079a3")
+            //     .attr("opacity", 1)
+            //     .attr("filter","None")
+
         } else if (expressed = 'Time') {
-            console.log("temporal mouseout data: ")
+            console.log("temporal mouseleave data: ")
             console.log(data)
 
             d3.selectAll(".matrixSpatialRect")
-                .style("fill", "#000000") // #ffffff
-                .style("stroke", "#000000")
-                .style("stroke-width", 2)
+                .style("fill", "#ffffff")
 
             if (data.total_annual_count)  {
                 tooltip
                     .style("opacity", 0)
                 d3.selectAll(".matrixTemporalRect") 
-                    .style("stroke", "#000000") // #ffffff
-                    .style("fill", "#000000") // #ffffff
-                    .style("stroke-width", 2)
+                    .style("stroke", "#ffffff")
+                    .style("fill", "#ffffff")
+                    .style("stroke-width", 1)
                     .style("opacity", 0)
                 d3.selectAll(".delaware_bay")
                     .style("fill", "#6079a3")
@@ -845,12 +931,33 @@
                     .lower()
                 
             } else {
-                console.log("temporal mouseout, spatial data:")
+                console.log("temporal mouseleave, spatial data:")
                 console.log(data)
             }
+
+            // tooltip
+            //     .style("opacity", 0)
+            // d3.selectAll(".matrixTemporalRect") 
+            //     .style("stroke", "None")
+            //     .style("fill", "#ffffff")
+            //     .style("stroke-width", 0.5)
+            //     .style("opacity", 0)
+            // d3.selectAll(".delaware_bay")
+            //     .style("fill", "#6079a3")
+            // d3.selectAll(".river_segments")
+            //     .style("stroke", "#6079a3")
+            // d3.selectAll(".river_segments.seg" + data.seg_id_nat)
+            //     .style("stroke", "#6079a3")
+            //     .attr("opacity", 1)
+            //     .attr("filter","None")
         }
 
     };
+
+    // *********************************************************************//
+    // function mouseleaveTemporal(data, tooltip) {
+
+    // };
 
     // *********************************************************************//
     // function clickRectSpatial(data, tooltip) {

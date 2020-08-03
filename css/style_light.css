@@ -7,7 +7,7 @@
 body {
   margin-bottom: 0px;
   font-family: sans-serif;
-  background-color: black;
+  /* background-color: black; */
 }
 
 .delaware_bay {
@@ -20,8 +20,13 @@ body {
   stroke-width: 0.5px;
 }
 
-.matrixAxis {
-  color: #bdbdbd;
+#streamgraph {
+  margin: 0px 0 0 0px;
+  fill: none;
+}
+
+.y.label {
+  font-size: 13px;
 }
 
 .dropdown {
@@ -29,7 +34,7 @@ body {
   position: relative;
   text-align: left;
   top: 15px; /* was 70 with map border*/
-  /* left: 55px; was 420 with map border */
+  left: 55px; /* was 420 with map border*/
   z-index: 10;
   font-family: sans-serif;
   font-size: 0.7em;
