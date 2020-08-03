@@ -9,49 +9,50 @@
     var expressed = 'Time';
 
     // begin script when window loads
-    window.onload = setMap();
+    window.onload = setPanels();
 
-    // timestep variable
-    var timestep = 'year'
+    // timestep variables
+    var matrixMapOne_timestep = 'year'
+    var matrixMapTwo_timestep = 'date'
 
-    // selection list for interaction
-    var select_list = ['Space', 'Time']
+    // selection list for dropdown
+    var selectList_matrixMapOne = ['Space', 'Time']
 
-    // create spatial data array
-    var dataArraySpace = []
-        
-    // create temporal data array
-    var dataArrayTime = []
-
-    // margins, width and height for matrix chart
+    // margins, width and height for matrix charts
     var matrix_margin = {top: 20, right: 15, bottom: 15, left: 35},
         matrix_width = 500 - matrix_margin.left - matrix_margin.right,
         matrix_height = window.innerHeight - matrix_margin.top - matrix_margin.bottom;
 
     // *********************************************************************//
-    function setMap(){
-        // map frame dimensions
+    function setPanels(){
+        // set universal map frame dimensions
         var map_width = window.innerWidth * 0.4,
             map_height = window.innerHeight;
-        
-        //create new svg container for the map
-        var map = d3.select("#drb_map")
-            .append("svg")
-            .attr("class", "map")
-            .attr("width", map_width)
-            .attr("height", map_height);
 
         //create Albers equal area conic projection centered on DRB
-        var projection = d3.geoAlbers()
+        var map_projection = d3.geoAlbers()
             .center([0, 40.558894445])
             .rotate([75.363333335, 0, 0])
             .parallels([39.9352537033, 41.1825351867])
             .scale(map_height*15)
             .translate([map_width / 2, map_height / 2]);
 
+        var map_path = d3.geoPath()
+            .projection(map_projection);
 
-        var path = d3.geoPath()
-            .projection(projection);
+        //create new svg container for the matrixMapOne
+        var matrixMapOne = d3.select("#DRB_matrixMapOne")
+        .append("svg")
+        .attr("class", "matrixMapOne")
+        .attr("width", map_width)
+        .attr("height", map_height);
+
+        // create new svg container for matrixMapTwo
+        var matrixMapTwo = d3.select("#DRB_matrixMapTwo")
+        .append("svg")
+        .attr("class", "matrixMapTwo")
+        .attr("width", map_width)
+        .attr("height", map_height);
         
         // parallelize asynchronous data loading d3.json("data/Segments_subset_4per_smooth.json"),
         var promises = [d3.csv("data/segment_maflow.csv"),
@@ -64,7 +65,7 @@
         Promise.all(promises).then(callback);
 
         // *********************************************************************//
-        // Place callback function within setMap to make use of local variables
+        // Place callback function within setPanels to make use of local variables
         function callback(data) {
             csv_flow = data[0];
             csv_matrix = data[1];
@@ -93,31 +94,21 @@
             // stroke color scale
             var colorScale = makeColorScale(segments);
 
-            // add DRB segments to the map
-            setSegments(segments, stations, bay, map, path, widthScale, colorScale);
+            // Set up panel 2 - matrixMapOne
+            // add DRB segments to the matrixMapOne map
+            setSegments_matrixMapOne(segments, stations, bay, matrixMapOne, map_path, widthScale, colorScale);
+            // create matrixOne
+            createMatrix_matrixMapOne(csv_matrix, csv_annual_count, segments, matrixMapOne_timestep);
+            // create dropdown for matrixOne
+            createDropdown_matrixMapOne(selectList_matrixMapOne, csv_matrix, csv_annual_count, segments)
 
-            // create streamgraph chart
-            // createStreamgraphChart(csv_streamgraph);
-
-            // create stacked area chart
-            // createStackedAreaChart(csv_stackedarea, csv_stackedarea2);
-
-            // populate array of segments
-            for (var i=0; i<segments.length; i++){
-                var val = segments[i]['seg_id_nat'];
-                dataArraySpace.push(val);
-            };
-            // populate array of times
-            for (var i=0; i<csv_annual_count.length; i++){
-                var val = csv_annual_count[i]['year'];
-                dataArrayTime.push(val);
-            };
-
-            // create matrix
-            createMatrix(csv_matrix, csv_annual_count, segments, timestep);
-
-            // create dropdown
-            createDropdown(select_list, csv_matrix, csv_annual_count, segments)
+            // // Set up panel 3 - matrixMapTwo
+            // // add DRB segments to the matrixMapOne map
+            setSegments_matrixMapTwo(segments, stations, bay, matrixMapTwo, map_path, widthScale, colorScale);
+            // // create matrixTwo
+            // createMatrix_matrixMapTwo(csv_matrix, csv_annual_count, segments, matrixMapTwo_timestep);
+            // // create dropdown for matrixOne
+            // createDropdown_matrixMapTwo(selectList_matrixMapTwo, csv_matrix, csv_annual_count, segments)
 
         };
     };
@@ -282,16 +273,19 @@
     };
 
     // *********************************************************************//
-    function setSegments(segments, stations, bay, map, path, widthScale, colorScale){
+    // *********************************************************************//
+    // *********************************************************************//
+    // *********************************************************************//
+    function setSegments_matrixMapOne(segments, stations, bay, map, map_path, widthScale, colorScale){
             
         // add delaware bay to map
         var drb_bay = map.append("path")
             .datum(bay)
             .attr("class", "delaware_bay")
-            .attr("d", path);
+            .attr("d", map_path);
 
         // set tooltip
-        var tooltip = d3.select("#drb_map")
+        var tooltip = d3.select("#DRB_matrixMapOne")
             .append("div")
             .style("opacity", 0)
             .attr("class", "tooltip")
@@ -326,7 +320,7 @@
             // add filter
             // .attr("filter", "url(#shadow1)")
             // project segments
-            .attr("d", path)
+            .attr("d", map_path)
             // add stroke width based on widthScale function
             .style("stroke-width", function(d){
                 var value = d.properties['avg_ann_flow'];
@@ -338,14 +332,14 @@
             })
             .style("fill", "None")
             .on("mouseover", function(d) {
-                mouseover(d, tooltip);
+                mouseover_matrixMapOne(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveSegSpatial(d, tooltip, position);
+                mousemoveSegSpatial_matrixMapOne(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseout(d, tooltip);
+                mouseout_matrixMapOne(d, tooltip);
             });
             // // set color based on colorScale function
             // .style("stroke", function(d){
@@ -379,7 +373,7 @@
             // })
             // .on("mousemove", function(d) {
             //     position = d3.mouse(this);
-            //     mousemoveSegSpatial(d, tooltip, position);
+            //     mousemoveSegSpatial_matrixMapOne(d, tooltip, position);
             // })
             // .on("mouseleave", function(d) {
             //     mouseleave(d, tooltip);
@@ -396,16 +390,14 @@
     };
 
     // *********************************************************************//
-    function createMatrix(csv_matrix, csv_annual_count, segments, timestep){
-        console.log("createMatrix:")
-        console.log(segments)
+    function createMatrix_matrixMapOne(csv_matrix, csv_annual_count, segments, matrixMapOne_timestep){
+
         // var margin = {top: 20, right: 15, bottom: 15, left: 55},
         //     width = 500 - margin.left - margin.right,
         //     height = window.innerHeight - margin.top - margin.bottom;
         
-
         // append the svg object ot the body of the page
-        var svgMatrix = d3.select("#matrixChart")
+        var svgMatrix = d3.select("#matrixChartOne")
             .append("svg")
                 .attr("width", matrix_width + matrix_margin.left + matrix_margin.right)
                 .attr("height", matrix_height + matrix_margin.top + matrix_margin.bottom)
@@ -416,7 +408,7 @@
                     "translate(" + matrix_margin.left + "," + matrix_margin.top + ")");
 
         // read in data
-        var myGroups = d3.map(csv_matrix, function(d){return d[timestep];}).keys() /* d.yearmonth if temporal interval = yearmonth */
+        var myGroups = d3.map(csv_matrix, function(d){return d[matrixMapOne_timestep];}).keys() /* d.yearmonth if temporal interval = yearmonth */
         var myVars = d3.map(csv_matrix, function(d){return d.seg_id_nat;}).keys() /* d.seg_id_nat */
 
         // build array of all values of observation counts
@@ -458,7 +450,7 @@
         var matrixSquares = svgMatrix.selectAll('matrixSqs')
             .data(csv_matrix, function(d) {
                 if (d.total_obs > 0) {
-                    return d[timestep] +':'+ d.seg_id_nat; /* d.seg_id_nat */
+                    return d[matrixMapOne_timestep] +':'+ d.seg_id_nat; /* d.seg_id_nat */
                 }
             }) 
             .enter()
@@ -476,11 +468,11 @@
             // .attr("ry", 1 )
             .attr("width", x.bandwidth())
             .attr("x", function(d) {
-               return x(d[timestep])
+               return x(d[matrixMapOne_timestep])
             })
             .attr("height", y.bandwidth())
             .attr("class", function(d) { 
-                return 'cell segment' + d.seg_id_nat + ' timestep' + d[timestep]
+                return 'cell segment' + d.seg_id_nat + ' timestep' + d[matrixMapOne_timestep]
             })
             .style("fill", function(d) {
                 return myColor(d.obs_count);
@@ -493,7 +485,7 @@
             .style("opacity", 1);
 
         // add the rectangles
-        createMatrixRectangles(csv_matrix, csv_annual_count, segments)
+        createMatrixRectangles_matrixMapOne(csv_matrix, csv_annual_count, segments)
 
         // draw x axes
         svgMatrix.append("g")
@@ -524,19 +516,14 @@
     };
 
     // *********************************************************************//
-    function createMatrixRectangles(csv_matrix, csv_annual_count, segments) {
-        console.log("createMatrixRectangles:")
-        console.log(segments)
-        
-        
-        console.log(expressed)
+    function createMatrixRectangles_matrixMapOne(csv_matrix, csv_annual_count, segments) {
 
         // create matrix recangles variable
         var transformedMatrix = d3.select(".transformedMatrix")
         // var matrixRectangles = svgMatrix.selectAll('matrixRect')
 
         // read in data
-        var myGroups = d3.map(csv_matrix, function(d){return d[timestep];}).keys() /* d.yearmonth if temporal interval = yearmonth */
+        var myGroups = d3.map(csv_matrix, function(d){return d[matrixMapOne_timestep];}).keys() /* d.yearmonth if temporal interval = yearmonth */
         var myVars = d3.map(csv_matrix, function(d){return d.seg_id_nat;}).keys() /* d.seg_id_nat */
 
         // var temporalCountMin = Math.round(Math.min(...domainArrayTemporalCounts));
@@ -555,7 +542,7 @@
             .padding(0.1);
 
         // create a tooltip
-        var tooltip = d3.select("#matrixChart")
+        var tooltip = d3.select("#matrixChartOne")
             .append("div")
             .style("opacity", 0)
             .attr("class", "tooltip")
@@ -599,14 +586,14 @@
             //     clickRectSpatial(d, tooltip);
             // })
             .on("mouseover", function(d) {
-                mouseover(d, tooltip);
+                mouseover_matrixMapOne(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveRect(d, tooltip, position);
+                mousemoveRect_matrixMapOne(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseout(d, tooltip);
+                mouseout_matrixMapOne(d, tooltip);
             })
 
         // revised build of temporal rectangles
@@ -615,7 +602,7 @@
             .enter()
             .append("rect")
             .attr("x", function(d){
-                return xscale(d[timestep])
+                return xscale(d[matrixMapOne_timestep])
             }) 
             .attr("y", 0) /* function(d) { return yscale(0) } */
             // .attr("rx", 1)
@@ -630,19 +617,19 @@
             .style("stroke", "#000000") // #ffffff"
             .style("opacity", 0)
             .on("mouseover", function(d) {
-                mouseover(d, tooltip);
+                mouseover_matrixMapOne(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveRect(d, tooltip, position);
+                mousemoveRect_matrixMapOne(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseout(d, tooltip);
+                mouseout_matrixMapOne(d, tooltip);
             })
     };
 
     // *********************************************************************//
-    function mousemoveRect(data, tooltip, position) {
+    function mousemoveRect_matrixMapOne(data, tooltip, position) {
         if (expressed == 'Space') {
             // console.log(data.properties.total_count)
             if (data.properties) {
@@ -668,7 +655,7 @@
     };
 
     // *********************************************************************//
-    function mousemoveSegSpatial(data, tooltip, position) {
+    function mousemoveSegSpatial_matrixMapOne(data, tooltip, position) {
         if (expressed == 'Space') {
             var num_obs = data.properties.total_count;
             tooltip
@@ -681,7 +668,7 @@
     };
     
     // *********************************************************************//
-    function mouseover(data, tooltip) {
+    function mouseover_matrixMapOne(data, tooltip) {
         if (expressed == 'Space') {
             console.log("spatial mouseover data: ")
             console.log(data)
@@ -775,7 +762,7 @@
     };
 
     // *********************************************************************//
-    function mouseout(data, tooltip) {
+    function mouseout_matrixMapOne(data, tooltip) {
         if (expressed == 'Space') {
             console.log("spatial mouseout data: ")
             console.log(data)
@@ -852,23 +839,12 @@
     };
 
     // *********************************************************************//
-    // function clickRectSpatial(data, tooltip) {
-    //     d3.selectAll(".matrixRect.seg" + data.seg_id_nat)
-    //         .style("stroke", "red")
-    //         .style("fill", "None")
-    //         .style("opacity", 1);
-    //     d3.selectAll(".river_segments.seg" + data.seg_id_nat)
-    //         .style("stroke", "red")
-    //         .attr("filter", "url(#shadow1)")
-    // };
-
-    // *********************************************************************//
     // fuction to create a dropdown menu for attribute selection
-    function createDropdown(select_list, csv_matrix, csv_annual_count, segments){
+    function createDropdown_matrixMapOne(selectList_matrixMapOne, csv_matrix, csv_annual_count, segments){
         console.log("createDropdown:")
         console.log(segments)
         // add select element
-        var dropdown = d3.select("#matrixChart")
+        var dropdown = d3.select("#matrixChartOne")
             // append the select element to the body
             .append("select")
             // add class for styling
@@ -876,7 +852,7 @@
             // add event listener
             .on("change", function(){
                 // call listener handler function
-                changeInteractionDimension(this.value, csv_matrix, csv_annual_count, segments)
+                changeInteractionDimension_matrixMapOne(this.value, csv_matrix, csv_annual_count, segments)
             });
 
         // add initial option
@@ -891,7 +867,7 @@
         // add attribute name options
         var attrOptions = dropdown.selectAll("attrOptions")
             // bind data to the elements to be created
-            .data(select_list)
+            .data(selectList_matrixMapOne)
             // create an element for each datum
             .enter()
             // append to the option
@@ -899,307 +875,140 @@
             // set value of attributes
             .attr("value", function(d){ return d })
             // set text element
-            .text(function(d){ return d });
+            .text(function(d){ 
+                return "Interaction Dimension: " +d 
+            });
     };
 
     // *********************************************************************//
-    function changeInteractionDimension(dimension, csv_matrix, csv_annual_count, segments){
+    function changeInteractionDimension_matrixMapOne(dimension, csv_matrix, csv_annual_count, segments){
         console.log("changeInteractionDimension:")
         console.log(segments)
-
 
         // reset expressed dimension based on selected dimension
         expressed = dimension;
 
-        // createMatrixRectangles(csv_matrix, csv_annual_count, segments)
+    };
 
+    // *********************************************************************//
+    // *********************************************************************//
+    // *********************************************************************//
+    // *********************************************************************//
+
+    function setSegments_matrixMapTwo(segments, stations, bay, map, map_path, widthScale, colorScale){
+            
+        // add delaware bay to map
+        var drb_bay = map.append("path")
+            .datum(bay)
+            .attr("class", "delaware_bay")
+            .attr("d", map_path);
+
+        // set tooltip
+        var tooltip = d3.select("#DRB_matrixMapTwo")
+            .append("div")
+            .style("opacity", 0)
+            .attr("class", "tooltip")
+            // .style("background-color", "white")
+            // .style("border", "solid")
+            // .style("border-width", "2px")
+            // .style("border-radius", "5px")
+            .style("padding", "5px")
+
+
+        // add drb segments to map
+        var drb_segments = map.selectAll(".river_segments")
+            // bind segments to each element to be created
+            .data(segments)
+            // create an element for each datum
+            .enter()
+            // append each element to the svg as a path element
+            .append("path")
+            // assign class for styling
+            .attr("class", function(d){
+                var seg_class = 'river_segments seg'
+                seg_class += d.seg_id_nat
+                for (key in d.properties.year_count) {
+                    if (d.properties.year_count[key]) {
+                        seg_class += " year" + key
+                    }
+                }
+                return seg_class
+
+                // return "river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
+            })
+            // add filter
+            // .attr("filter", "url(#shadow1)")
+            // project segments
+            .attr("d", map_path)
+            // add stroke width based on widthScale function
+            .style("stroke-width", function(d){
+                var value = d.properties['avg_ann_flow'];
+                if (value){
+                    return widthScale(value);
+                } else {
+                    return "#ccc";
+                }
+            })
+            .style("fill", "None")
+            .on("mouseover", function(d) {
+                mouseover_matrixMapOne(d, tooltip);
+            })
+            .on("mousemove", function(d) {
+                position = d3.mouse(this);
+                mousemoveSegSpatial_matrixMapOne(d, tooltip, position);
+            })
+            .on("mouseout", function(d) {
+                mouseout_matrixMapOne(d, tooltip);
+            });
+            // // set color based on colorScale function
+            // .style("stroke", function(d){
+            //     var value = d.properties['total_count'];
+            //     if(value){
+            //       return colorScale(value);
+            //     } else {
+            //       return "#ccc";
+            //     };
+            // });
+        
+        // // add drb stations to map
+        // var drb_stations = map.selectAll(".obs_stations")
+        //     // bind segments to each element to be created
+        //     .data(stations)
+        //     // create an element for each datum
+        //     .enter()
+        //     // append each element to the svg as a circle element
+        //     .append("path")
+        //     // assign class for styling
+        //     .attr("class", function(d){
+        //         return "obs_stations station" + d.id
+        //     })
+        //     // project points
+        //     .attr("d", path)
+        //     .attr("radius", 6)
+        //     .style("fill", "Red")
+        //     .style("stroke", "None")
+            // .on("mouseover", function(d) {
+            //     mouseover(d, tooltip);
+            // })
+            // .on("mousemove", function(d) {
+            //     position = d3.mouse(this);
+            //     mousemoveSegSpatial_matrixMapOne(d, tooltip, position);
+            // })
+            // .on("mouseleave", function(d) {
+            //     mouseleave(d, tooltip);
+            // });
+            // // set color based on colorScale function
+            // .style("stroke", function(d){
+            //     var value = d.properties['total_count'];
+            //     if(value){
+            //       return colorScale(value);
+            //     } else {
+            //       return "#ccc";
+            //     };
+            // });
     };
 
 
-    // *********************************************************************//
-    // function createStreamgraphChart(data) {
-    //     // set dimensions of graph
-    //     var margin = {
-    //         top: 20,
-    //         right: 30,
-    //         bottom: 30,
-    //         left: 60
-    //     },
-    //     width = 460 - margin.left - margin.right,
-    //     height = 400 - margin.top - margin.bottom;
 
-    //     // append svg object to the body of the page
-    //     var svg = d3.select("body")
-    //         .append("svg")
-    //             .attr("width", width + margin.left + margin.right)
-    //             .attr("height", height + margin.top + margin.bottom)
-    //         .append("g")
-    //             .attr("transform",
-    //                 "translate(" + margin.left + "," + margin.top + ")");
-
-    //     // list of groups = header of the csv file
-    //     var keys = data.columns.slice(1)
-
-    //     // Add X axis
-    //     var x = d3.scaleLinear()
-    //         .domain(d3.extent(data, function(d) { return d.year; }))
-    //         .range([0, width]);
-        
-    //     // draw x axis
-    //     svg.append("g")
-    //         .attr("transform", "translate(" + 0 + "," + height*0.85 + ")")
-    //         .call(d3.axisBottom(x).tickSize(-height*0.7).tickValues([1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019]).tickFormat(d3.format("d"))) /*             .call(d3.axisBottom(x).ticks(10).tickFormat(d3.format("d"))); */
-    //         // remove axis line (but not ticks)
-    //         .select(".domain").remove();
-        
-    //     svg.selectAll(".tick line").attr("stroke", "#b8b8b8")
-
-    //     // // Add X axis label:
-    //     // svg.append("text")
-    //     //     .attr("text-anchor", "end")
-    //     //     .attr("x", width)
-    //     //     .attr("y", height-20 )
-    //     //     .text("Time (year)");
-
-    //     // Add Y axis
-    //     var y = d3.scaleLinear()
-    //         .domain([-15000, 15000])
-    //         .range([height,0]);
-        
-    //     // draw y axis
-    //     // svg.append("g")
-    //     //     .call(d3.axisLeft(y));
-        
-    //     // color palette
-    //     var color = d3.scaleOrdinal()
-    //         .domain(keys)
-    //         .range(d3.schemeTableau10);
-        
-    //     // stack the data
-    //     var stackedData = d3.stack()
-    //         .offset(d3.stackOffsetSilhouette)
-    //         .keys(keys)
-    //         (data)
-
-    //     // create tooltip
-    //     var Tooltip = svg
-    //         .append("text")
-    //         .attr("x", 10)
-    //         .attr("y", 70)
-    //         .style("opacity", 0)
-    //         .style("font-size", 15)
-
-    //     // Three function that changes the tooltip when the user hover/move/leave a cell
-    //     var mouseover = function(d) {
-    //         Tooltip.style("opacity", 1)
-    //         d3.selectAll(".myArea").style("opacity", 0.2)
-    //         d3.select(this)
-    //             .style("stroke", "black")
-    //             .style("stroke-width", 0.3)
-    //             .style("opacity", 1)
-    //     }
-
-    //     var mousemove = function(d, i) {
-    //         grp = keys[i]
-    //         Tooltip.text(Math.round(grp))
-    //     }
-
-    //     var mouseleave = function(d) {
-    //         Tooltip.style("opacity", 0)
-    //         d3.selectAll(".myArea").style("opacity", 1).style("stroke", "none")
-    //     }
-        
-    //     var area = d3.area()
-    //         .x(function(d, i) { return x(d.data.year); })
-    //         .y0(function(d) { return y(d[0]); })
-    //         .y1(function(d) { return y(d[1]); })
-
-    //     // show the areas
-    //     svg
-    //         .selectAll("mylayers")
-    //         .data(stackedData)
-    //         .enter()
-    //         .append("path")
-    //             .attr("class", "myArea")
-    //             .style('fill', function(d) { return color(d.key); })
-    //             .attr("d", area)
-    //             .on("mouseover", mouseover)
-    //             .on("mousemove", mousemove)
-    //             .on("mouseleave", mouseleave)
-    // };
-
-    // *********************************************************************//
-    // function createStackedAreaChart(data, data2) {
-    //     // set dimensions of graph
-    //     var margin = {
-    //         top: 20,
-    //         right: 30,
-    //         bottom: 30,
-    //         left: 60
-    //     },
-    //     width = 460 - margin.left - margin.right,
-    //     height = 400 - margin.top - margin.bottom;
-
-    //     // append svg object to the body of the page
-    //     var svg = d3.select("body")
-    //         .append("svg")
-    //             .attr("width", width + margin.left + margin.right)
-    //             .attr("height", height + margin.top + margin.bottom)
-    //         .append("g")
-    //             .attr("transform",
-    //                 "translate(" + margin.left + "," + margin.top + ")");
-
-    //     // list of groups = header of the csv file
-    //     // for lower order streams
-    //     var keys = data.columns.slice(1)
-    //     // for higher order streams
-    //     var keys2 = data2.columns.slice(1)
-
-    //     // Add X axis for lower order streams
-    //     var x = d3.scaleLinear()
-    //         .domain(d3.extent(data, function(d) { return d.year; }))
-    //         .range([0, width]);
-        
-    //     // draw x axis
-    //     svg.append("g")
-    //         .attr("transform", "translate(" + 0 + "," + height + ")") /* height * 0.85 */
-    //         // .call(d3.axisBottom(x).ticks(10).tickFormat(d3.format("d")));
-    //         .call(d3.axisBottom(x).tickSize(-height).tickValues([1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2019]).tickFormat(d3.format("d"))) /*             .call(d3.axisBottom(x).ticks(10).tickFormat(d3.format("d"))); */
-    //         // remove axis line (but not ticks)
-    //         .select(".domain").remove();
-        
-    //     svg.selectAll(".tick line").attr("stroke", "#b8b8b8")
-
-    //     // Add X axis label:
-    //     svg.append("text")
-    //         .attr("text-anchor", "end")
-    //         .attr("x", width)
-    //         .attr("y", height-20 );
-    //         // .text("Time (year)");
-
-    //     // Add Y axis for lower order streams
-    //     var y = d3.scaleLinear()
-    //         .domain([69715, 0])
-    //         .range([3,height/2]);
-        
-    //     // draw y axis
-    //     svg.append("g")
-    //         .call(d3.axisLeft(y).tickSize(0).tickValues([]))
-    //         .select(".domain").remove();
-    //         // .text("Lower Order Streams");
-        
-    //     // Add Y axis for higher order streams
-    //     var y2 = d3.scaleLinear()
-    //         .domain([96725,0])
-    //         .range([height,(height/2)+3]);
-        
-    //     // draw second y axis
-    //     svg.append("g")
-    //         .call(d3.axisLeft(y2).tickSize(0).tickValues([]))
-    //         .select(".domain").remove()
-        
-    //     svg.append("text")
-    //         .attr("class", "y label")
-    //         .attr("text-anchor", "end")
-    //         .attr("y", -20)
-    //         .attr("x", -190)
-    //         .attr("dy", ".75em")
-    //         .attr("transform", "rotate(-90)")
-    //         .text("Strahler stream order 4-7")
-        
-    //     svg.append("text")
-    //         .attr("class", "y label")
-    //         .attr("text-anchor", "end")
-    //         .attr("y", -20)
-    //         .attr("x", -15)
-    //         .attr("dy", ".75em")
-    //         .attr("transform", "rotate(-90)")
-    //         .text("Strahler stream order 1-3")
-
-    //     // color palette for lower order streams
-    //     var color = d3.scaleOrdinal()
-    //         .domain(keys)
-    //         .range(d3.schemeTableau10);
-        
-    //     // color palette for higher order streams
-    //     var color2 = d3.scaleOrdinal()
-    //         .domain(keys2)
-    //         .range(d3.schemeTableau10);
-        
-    //     // stack the data for lower order streams
-    //     var stackedData = d3.stack()
-    //         .keys(keys)
-    //         (data);
-
-    //     var stackedData2 = d3.stack()
-    //         .keys(keys2)
-    //         (data2);    
-
-    //     // create tooltip
-    //     var Tooltip = svg
-    //         .append("text")
-    //         .attr("x", 2)
-    //         .attr("y", -5)
-    //         .style("opacity", 0)
-    //         .style("font-size", 10)
-
-    //     // Three function that changes the tooltip when the user hover/move/leave a cell
-    //     var mouseover = function(d) {
-    //         Tooltip.style("opacity", 1)
-    //         d3.selectAll(".stackedArea").style("opacity", 0.2)
-    //         d3.select(this)
-    //             .style("stroke", "black")
-    //             .style("stroke-width", 0.3)
-    //             .style("opacity", 1)
-    //     }
-
-    //     var mousemove = function(d, i) {
-    //         grp = keys[i]
-    //         Tooltip.text('Segment id: ' + Math.round(grp))
-    //     }
-    //     var mousemove2 = function(d, i) {
-    //         grp = keys2[i]
-    //         Tooltip.text('Segment id: ' + Math.round(grp))
-    //     }
-
-    //     var mouseleave = function(d) {
-    //         Tooltip.style("opacity", 0)
-    //         d3.selectAll(".stackedArea").style("opacity", 1).style("stroke", "none")
-    //     }
-        
-    //     var area = d3.area()
-    //         .x(function(d, i) { return x(d.data.year); })
-    //         .y0(function(d) { return y(d[0]); })
-    //         .y1(function(d) { return y(d[1]); })
-        
-    //     var area2 = d3.area()
-    //         .x(function(d, i) { return x(d.data.year); })
-    //         .y0(function(d) { return y2(d[0]); })
-    //         .y1(function(d) { return y2(d[1]); })
-
-    //     // show the areas
-    //     svg
-    //         .selectAll("stackedareas1")
-    //         .data(stackedData)
-    //         .enter()
-    //         .append("path")
-    //             .attr("class", "stackedArea")
-    //             .style('fill', function(d) { return color(d.key); })
-    //             .attr("d", area)
-    //             .on("mouseover", mouseover)
-    //             .on("mousemove", mousemove)
-    //             .on("mouseleave", mouseleave)
-    //     svg
-    //         .selectAll("stackedareas2")
-    //         .data(stackedData2)
-    //         .enter()
-    //         .append("path")
-    //             .attr("class", "stackedArea")
-    //             .style('fill', function(d) { return color2(d.key); })
-    //             .attr("d", area2)
-    //             .on("mouseover", mouseover)
-    //             .on("mousemove", mousemove2)
-    //             .on("mouseleave", mouseleave)
-    // };
 
 })();
