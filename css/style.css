@@ -41,6 +41,7 @@ body {
 }
 
 .tooltip {
+  color: #ffffff;
   font-family: sans-serif;
   font-size: 0.7em;
   font-weight: bold;

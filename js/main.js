@@ -692,7 +692,6 @@
 
             if (data.properties) {
                 tooltip
-                    .style("color", "#ffffff")
                     .style("opacity", 1);
                 d3.selectAll(".matrixSpatialRect")
                     .style("opacity", 0.8)
