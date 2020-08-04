@@ -6,28 +6,28 @@
     var flowArray = ['avg_ann_flow']
 
     // initial attribute
-    var expressed = 'Time';
+    var expressed_c2p2 = 'Space';
 
     // begin script when window loads
     window.onload = setPanels();
 
     // timestep variables
-    var matrixMapOne_timestep = 'year'
-    var matrixMapTwo_timestep = 'date'
+    var timestep_c2p2 = 'year'
+    var timestep_c2p3 = 'date'
 
     // selection list for dropdown
-    var selectList_matrixMapOne = ['Space', 'Time']
+    var selectList_c2p2 = ['Space', 'Time']
 
     // margins, width and height for matrix charts
     var matrix_margin = {top: 20, right: 15, bottom: 15, left: 35},
         matrix_width = 500 - matrix_margin.left - matrix_margin.right,
-        matrix_height = window.innerHeight - matrix_margin.top - matrix_margin.bottom;
+        matrix_height_c2p2 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom;
 
     // *********************************************************************//
     function setPanels(){
         // set universal map frame dimensions
         var map_width = window.innerWidth * 0.4,
-            map_height = window.innerHeight;
+            map_height = window.innerHeight*0.95;
 
         //create Albers equal area conic projection centered on DRB
         var map_projection = d3.geoAlbers()
@@ -40,17 +40,17 @@
         var map_path = d3.geoPath()
             .projection(map_projection);
 
-        //create new svg container for the matrixMapOne
-        var matrixMapOne = d3.select("#DRB_matrixMapOne")
+        //create new svg container for the panel 2 map
+        var map_c2p2 = d3.select("#DRB_map_c2p2")
         .append("svg")
-        .attr("class", "matrixMapOne")
+        .attr("class", "map_c2p2")
         .attr("width", map_width)
         .attr("height", map_height);
 
-        // create new svg container for matrixMapTwo
-        var matrixMapTwo = d3.select("#DRB_matrixMapTwo")
+        // create new svg container for map_c2p3
+        var map_c2p3 = d3.select("#DRB_map_c2p3")
         .append("svg")
-        .attr("class", "matrixMapTwo")
+        .attr("class", "map_c2p3")
         .attr("width", map_width)
         .attr("height", map_height);
         
@@ -94,21 +94,22 @@
             // stroke color scale
             var colorScale = makeColorScale(segments);
 
-            // Set up panel 2 - matrixMapOne
-            // add DRB segments to the matrixMapOne map
-            setSegments_matrixMapOne(segments, stations, bay, matrixMapOne, map_path, widthScale, colorScale);
-            // create matrixOne
-            createMatrix_matrixMapOne(csv_matrix, csv_annual_count, segments, matrixMapOne_timestep);
-            // create dropdown for matrixOne
-            createDropdown_matrixMapOne(selectList_matrixMapOne, csv_matrix, csv_annual_count, segments)
+            // // Set up panel 2 - 
+            // add DRB segments to the panel 2 map
+            setSegments_c2p2(segments, stations, bay, map_c2p2, map_path, widthScale, colorScale);
+            // create dropdown for panel 2 matrix
+            createDropdown_c2p2(selectList_c2p2, csv_matrix, csv_annual_count, segments)
+            // create panel 2 matrix
+            createMatrix_c2p2(csv_matrix, csv_annual_count, segments, timestep_c2p2);
 
-            // // Set up panel 3 - matrixMapTwo
-            // // add DRB segments to the matrixMapOne map
-            setSegments_matrixMapTwo(segments, stations, bay, matrixMapTwo, map_path, widthScale, colorScale);
+
+            // // Set up panel 3 - 
+            // // add DRB segments to the panel 3 map
+            setSegments_c2p3(segments, stations, bay, map_c2p3, map_path, widthScale, colorScale);
             // // create matrixTwo
-            // createMatrix_matrixMapTwo(csv_matrix, csv_annual_count, segments, matrixMapTwo_timestep);
-            // // create dropdown for matrixOne
-            // createDropdown_matrixMapTwo(selectList_matrixMapTwo, csv_matrix, csv_annual_count, segments)
+            // createMatrix_c2p3(csv_matrix, csv_annual_count, segments, timestep_c2p3);
+            // // create dropdown for panel 3 matrix
+            // createDropdown_c2p3(selectList_c2p3, csv_matrix, csv_annual_count, segments)
 
         };
     };
@@ -276,19 +277,19 @@
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
-    function setSegments_matrixMapOne(segments, stations, bay, map, map_path, widthScale, colorScale){
+    function setSegments_c2p2(segments, stations, bay, map, map_path, widthScale, colorScale){
             
         // add delaware bay to map
         var drb_bay = map.append("path")
             .datum(bay)
-            .attr("class", "delaware_bay")
+            .attr("class", "c2p2 delaware_bay")
             .attr("d", map_path);
 
         // set tooltip
-        var tooltip = d3.select("#DRB_matrixMapOne")
+        var tooltip = d3.select("#DRB_map_c2p2")
             .append("div")
             .style("opacity", 0)
-            .attr("class", "tooltip")
+            .attr("class", "c2p2 tooltip")
             // .style("background-color", "white")
             // .style("border", "solid")
             // .style("border-width", "2px")
@@ -306,7 +307,7 @@
             .append("path")
             // assign class for styling
             .attr("class", function(d){
-                var seg_class = 'river_segments seg'
+                var seg_class = 'c2p2 river_segments seg'
                 seg_class += d.seg_id_nat
                 for (key in d.properties.year_count) {
                     if (d.properties.year_count[key]) {
@@ -315,7 +316,7 @@
                 }
                 return seg_class
 
-                // return "river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
+                // return "c2p2 river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
             })
             // add filter
             // .attr("filter", "url(#shadow1)")
@@ -332,14 +333,14 @@
             })
             .style("fill", "None")
             .on("mouseover", function(d) {
-                mouseover_matrixMapOne(d, tooltip);
+                mouseover_c2p2(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveSegSpatial_matrixMapOne(d, tooltip, position);
+                mousemoveSegSpatial_c2p2(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseout_matrixMapOne(d, tooltip);
+                mouseout_c2p2(d, tooltip);
             });
             // // set color based on colorScale function
             // .style("stroke", function(d){
@@ -361,7 +362,7 @@
         //     .append("path")
         //     // assign class for styling
         //     .attr("class", function(d){
-        //         return "obs_stations station" + d.id
+        //         return "c2p2 obs_stations station" + d.id
         //     })
         //     // project points
         //     .attr("d", path)
@@ -373,7 +374,7 @@
             // })
             // .on("mousemove", function(d) {
             //     position = d3.mouse(this);
-            //     mousemoveSegSpatial_matrixMapOne(d, tooltip, position);
+            //     mousemoveSegSpatial_c2p2(d, tooltip, position);
             // })
             // .on("mouseleave", function(d) {
             //     mouseleave(d, tooltip);
@@ -390,25 +391,21 @@
     };
 
     // *********************************************************************//
-    function createMatrix_matrixMapOne(csv_matrix, csv_annual_count, segments, matrixMapOne_timestep){
-
-        // var margin = {top: 20, right: 15, bottom: 15, left: 55},
-        //     width = 500 - margin.left - margin.right,
-        //     height = window.innerHeight - margin.top - margin.bottom;
-        
+    function createMatrix_c2p2(csv_matrix, csv_annual_count, segments, timestep_c2p2){
+       
         // append the svg object ot the body of the page
-        var svgMatrix = d3.select("#matrixChartOne")
+        var svgMatrix = d3.select("#matrixChart_c2p2")
             .append("svg")
                 .attr("width", matrix_width + matrix_margin.left + matrix_margin.right)
-                .attr("height", matrix_height + matrix_margin.top + matrix_margin.bottom)
-                .attr("class", "matrix")
+                .attr("height", matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)
+                .attr("class", "c2p2 matrix")
             .append("g")
-                .attr("class", "transformedMatrix")
+                .attr("class", "c2p2 transformedMatrix")
                 .attr("transform",
                     "translate(" + matrix_margin.left + "," + matrix_margin.top + ")");
 
         // read in data
-        var myGroups = d3.map(csv_matrix, function(d){return d[matrixMapOne_timestep];}).keys() /* d.yearmonth if temporal interval = yearmonth */
+        var myGroups = d3.map(csv_matrix, function(d){return d[timestep_c2p2];}).keys() /* d.yearmonth if temporal interval = yearmonth */
         var myVars = d3.map(csv_matrix, function(d){return d.seg_id_nat;}).keys() /* d.seg_id_nat */
 
         // build array of all values of observation counts
@@ -436,7 +433,7 @@
 
         // build y scales
         var y = d3.scaleBand()
-            .range([matrix_height, 0])
+            .range([matrix_height_c2p2, 0])
             .domain(myVars)
             .padding(0.1);
 
@@ -450,7 +447,7 @@
         var matrixSquares = svgMatrix.selectAll('matrixSqs')
             .data(csv_matrix, function(d) {
                 if (d.total_obs > 0) {
-                    return d[matrixMapOne_timestep] +':'+ d.seg_id_nat; /* d.seg_id_nat */
+                    return d[timestep_c2p2] +':'+ d.seg_id_nat; /* d.seg_id_nat */
                 }
             }) 
             .enter()
@@ -468,11 +465,11 @@
             // .attr("ry", 1 )
             .attr("width", x.bandwidth())
             .attr("x", function(d) {
-               return x(d[matrixMapOne_timestep])
+               return x(d[timestep_c2p2])
             })
             .attr("height", y.bandwidth())
             .attr("class", function(d) { 
-                return 'cell segment' + d.seg_id_nat + ' timestep' + d[matrixMapOne_timestep]
+                return 'c2p2 cell segment' + d.seg_id_nat + ' timestep' + d[timestep_c2p2]
             })
             .style("fill", function(d) {
                 return myColor(d.obs_count);
@@ -485,45 +482,45 @@
             .style("opacity", 1);
 
         // add the rectangles
-        createMatrixRectangles_matrixMapOne(csv_matrix, csv_annual_count, segments)
+        createMatrixRectangles_c2p2(csv_matrix, csv_annual_count, segments)
 
         // draw x axes
         svgMatrix.append("g")
             .style("font-size", 10)
-            .attr("transform", "translate(" + 0 + "," + matrix_height + ")")
-            .attr("class", "matrixAxis bottom")
+            .attr("transform", "translate(" + 0 + "," + matrix_height_c2p2 + ")")
+            .attr("class", "c2p2 matrixAxis bottom")
             .call(d3.axisBottom(x).tickSize(0).tickValues(['1980', '1990', '2000', '2010', '2019'])) /* '1980-01', '1990-01', '2000-01', '2010-01', '2019-01' */
             // .select(".domain").remove()
         svgMatrix.append("g")
             .style("font-size", 0)
             .attr("transform", "translate(" + 0 + "," + 0 + ")")
-            .attr("class", "matrixAxis top")
+            .attr("class", "c2p2 matrixAxis top")
             .call(d3.axisTop(x).tickSize(0))
             // .select(".domain").remove()
 
         // draw y axes
         svgMatrix.append("g")
             .style("font-size", 0)
-            .attr("class", "matrixAxis left")
+            .attr("class", "c2p2 matrixAxis left")
             .call(d3.axisLeft(y).tickSize(0))
             // .select(".domain").remove()
         svgMatrix.append("g")
             .style("font-size", 0)
             .attr("transform", "translate(" + matrix_width + "," + 0 + ")")
-            .attr("class", "matrixAxis right")
+            .attr("class", "c2p2 matrixAxis right")
             .call(d3.axisRight(y).tickSize(0))
 
     };
 
     // *********************************************************************//
-    function createMatrixRectangles_matrixMapOne(csv_matrix, csv_annual_count, segments) {
+    function createMatrixRectangles_c2p2(csv_matrix, csv_annual_count, segments) {
 
         // create matrix recangles variable
-        var transformedMatrix = d3.select(".transformedMatrix")
+        var transformedMatrix = d3.select(".c2p2.transformedMatrix")
         // var matrixRectangles = svgMatrix.selectAll('matrixRect')
 
         // read in data
-        var myGroups = d3.map(csv_matrix, function(d){return d[matrixMapOne_timestep];}).keys() /* d.yearmonth if temporal interval = yearmonth */
+        var myGroups = d3.map(csv_matrix, function(d){return d[timestep_c2p2];}).keys() /* d.yearmonth if temporal interval = yearmonth */
         var myVars = d3.map(csv_matrix, function(d){return d.seg_id_nat;}).keys() /* d.seg_id_nat */
 
         // var temporalCountMin = Math.round(Math.min(...domainArrayTemporalCounts));
@@ -537,15 +534,15 @@
 
         // build y scales
         var yscale = d3.scaleBand()
-            .range([matrix_height, 0])
+            .range([matrix_height_c2p2, 0])
             .domain(myVars)
             .padding(0.1);
 
         // create a tooltip
-        var tooltip = d3.select("#matrixChartOne")
+        var tooltip = d3.select("#matrixChart_c2p2")
             .append("div")
             .style("opacity", 0)
-            .attr("class", "tooltip")
+            .attr("class", "c2p2 tooltip")
             // .style("background-color", "white")
             // .style("border", "solid")
             // .style("border-width", "2px")
@@ -553,7 +550,7 @@
             .style("padding", "5px")
 
         // revised build of spatial rectangles
-        var matrixSpatialRectangles = transformedMatrix.selectAll('.matrixSpatialRect')           
+        var SpatialRectangles = transformedMatrix.selectAll('.c2p2.matrixSpatialRect')           
             .data(segments)
             .enter()
             .append("rect")
@@ -564,7 +561,7 @@
             .attr("width", matrix_width)
             .attr("height", yscale.bandwidth() )
             .attr("class", function(d) { 
-                return 'matrixSpatialRect seg' + d.seg_id_nat;
+                return 'c2p2 matrixSpatialRect seg' + d.seg_id_nat;
             })
             .style("fill", function(d) { 
                 if (d.properties.total_count > 0) {
@@ -586,63 +583,62 @@
             //     clickRectSpatial(d, tooltip);
             // })
             .on("mouseover", function(d) {
-                mouseover_matrixMapOne(d, tooltip);
+                mouseover_c2p2(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveRect_matrixMapOne(d, tooltip, position);
+                mousemoveRect_c2p2(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseout_matrixMapOne(d, tooltip);
+                mouseout_c2p2(d, tooltip);
             })
 
         // revised build of temporal rectangles
-        var matrixTemporalRectangles = transformedMatrix.selectAll('.matrixTemporalRect')
+        var TemporalRectangles = transformedMatrix.selectAll('.c2p2.matrixTemporalRect')
             .data(csv_annual_count)
             .enter()
             .append("rect")
             .attr("x", function(d){
-                return xscale(d[matrixMapOne_timestep])
+                return xscale(d[timestep_c2p2])
             }) 
             .attr("y", 0) /* function(d) { return yscale(0) } */
             // .attr("rx", 1)
             // .attr("ry", 1)
             .attr("width", xscale.bandwidth())
-            .attr("height", matrix_height)
+            .attr("height", matrix_height_c2p2)
             .attr("class", function(d) { 
-                return 'matrixTemporalRect time' + d.year;
+                return 'c2p2 matrixTemporalRect time' + d.year;
             })
             .style("fill", "#000000") // "#ffffff"
             .style("stroke-width", 2)
             .style("stroke", "#000000") // #ffffff"
             .style("opacity", 0)
             .on("mouseover", function(d) {
-                mouseover_matrixMapOne(d, tooltip);
+                mouseover_c2p2(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveRect_matrixMapOne(d, tooltip, position);
+                mousemoveRect_c2p2(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseout_matrixMapOne(d, tooltip);
+                mouseout_c2p2(d, tooltip);
             })
     };
 
     // *********************************************************************//
-    function mousemoveRect_matrixMapOne(data, tooltip, position) {
-        if (expressed == 'Space') {
-            // console.log(data.properties.total_count)
+    function mousemoveRect_c2p2(data, tooltip, position) {
+        if (expressed_c2p2 == 'Space') {
             if (data.properties) {
                 var num_obs = data.properties.total_count;
-                yoffset = position[1]+5
+                yoffset = position[1]+10
                 tooltip
                     .html(d3.format(',')(num_obs) + "<p>obs.")
                     // .html("Segment " + data.seg_id_nat)
-                    .style("left", 10 + "px")
+                    .style("left", 8 + "px")
                     .style("top", yoffset + "px")
                     .style("text-align", "right");
             }
-        } else if (expressed = 'Time') {
+        } else if (expressed_c2p2 = 'Time') {
             if (data.total_annual_count) {
                 xoffset = position[0]+10
                 yoffset = position[1]-5
@@ -655,8 +651,8 @@
     };
 
     // *********************************************************************//
-    function mousemoveSegSpatial_matrixMapOne(data, tooltip, position) {
-        if (expressed == 'Space') {
+    function mousemoveSegSpatial_c2p2(data, tooltip, position) {
+        if (expressed_c2p2 == 'Space') {
             var num_obs = data.properties.total_count;
             tooltip
                 .html(d3.format(',')(num_obs) + "<p>obs.")
@@ -664,29 +660,26 @@
                 .style("left", position[0]+35 + "px")
                 .style("top", position[1]-25 + "px")
                 .style("text-align", "left"); /* position[1]+110 */
-        } //else if (expressed = 'Time') 
+        } //else if (expressed_c2p2 = 'Time') 
     };
     
     // *********************************************************************//
-    function mouseover_matrixMapOne(data, tooltip) {
-        if (expressed == 'Space') {
-            console.log("spatial mouseover data: ")
-            console.log(data)
+    function mouseover_c2p2(data, tooltip) {
+        if (expressed_c2p2 == 'Space') {
 
-            d3.selectAll(".matrixTemporalRect")
+            d3.selectAll(".c2p2.matrixTemporalRect")
                 .style("fill", "None")
                 .style("stroke", "None")
 
             if (data.properties) {
                 tooltip
                     .style("opacity", 1);
-                d3.selectAll(".matrixSpatialRect")
+                d3.selectAll(".c2p2.matrixSpatialRect")
                     .style("opacity", 0.8)
                     .style("stroke-width", 1);
-                d3.selectAll(".cell.segment" + data.seg_id_nat)
+                d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
                     .raise()
-                d3.selectAll(".matrixSpatialRect.seg" + data.seg_id_nat)
-                    // .style("stroke-width", 0.5)
+                d3.selectAll(".c2p2.matrixSpatialRect.seg" + data.seg_id_nat)
                     .style("stroke-width", function(data) {
                         if (data.properties.total_count > 0) { //properties.total_count
                             return 0;                   
@@ -709,65 +702,48 @@
                         }
                     })
                     .raise();
-                d3.selectAll(".delaware_bay")
+                d3.selectAll(".c2p2.delaware_bay")
                     .style("fill", "#172c4f")
-                d3.selectAll(".river_segments")
+                d3.selectAll(".c2p2.river_segments")
                     .style("stroke", "#172c4f")
-                d3.selectAll(".river_segments.seg" + data.seg_id_nat)
+                d3.selectAll(".c2p2.river_segments.seg" + data.seg_id_nat)
                     .style("stroke", "#ffffff")
                     .attr("opacity", 1)
                     .attr("filter", "url(#shadow1)")
                     .raise()
+            } 
+        } else if (expressed_c2p2 = 'Time') {
 
-            } else {
-                console.log("spatial mouseover, temporal data: ")
-                console.log(data)
-            }
-
-        } else if (expressed = 'Time') {
-            console.log("temporal mouseover data: ")
-            console.log(data)
-
-            d3.selectAll(".matrixSpatialRect")
+            d3.selectAll(".c2p2.matrixSpatialRect")
                 .style("fill", "None")
                 .style("stroke", "None")
 
             if (data.total_annual_count) {
                 tooltip
                     .style("opacity", 1);
-                d3.selectAll(".matrixTemporalRect")
+                d3.selectAll(".c2p2.matrixTemporalRect")
                     .style("opacity", 0.8)
                     .style("stroke-width", 2);
-                d3.selectAll(".matrixTemporalRect.time" + data.year)
+                d3.selectAll(".c2p2.matrixTemporalRect.time" + data.year)
                     .style("opacity", 0)
-                d3.selectAll(".delaware_bay")
+                d3.selectAll(".c2p2.delaware_bay")
                     .style("fill", "#172c4f")
-                d3.selectAll(".river_segments")
+                d3.selectAll(".c2p2.river_segments")
                     .style("stroke", "#172c4f")
-                d3.selectAll(".river_segments.year" + data.year)
+                d3.selectAll(".c2p2.river_segments.year" + data.year)
                     .style("stroke", "#ffffff")
                     .attr("opacity", 1)
-                    // .attr("filter", "url(#shadow1)")
                     .raise()
-
-
-            } else {
-                console.log("temporal mouseover, spatial data: ")
-                console.log(data)
-            }
-
+            } 
         }
-
             
     };
 
     // *********************************************************************//
-    function mouseout_matrixMapOne(data, tooltip) {
-        if (expressed == 'Space') {
-            console.log("spatial mouseout data: ")
-            console.log(data)
+    function mouseout_c2p2(data, tooltip) {
+        if (expressed_c2p2 == 'Space') {
 
-            d3.selectAll(".matrixTemporalRect")
+            d3.selectAll(".c2p2.matrixTemporalRect")
                 .style("fill", "#000000")
                 .style("stroke", "#000000")
                 .style("stroke-width", 2) 
@@ -775,37 +751,32 @@
             if (data.properties) {
                 tooltip
                     .style("opacity", 0)
-                d3.selectAll(".matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
+                d3.selectAll(".c2p2.matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
                     .style("stroke", "None")    
                     .style("stroke", "#000000") // "#ffffff"
                     .style("fill", "#000000") // "#ffffff"
                     .style("stroke-width", 2)
                     .style("opacity", 0)
-                d3.selectAll(".matrixSpatialRect" + data.seg_id_nat)
+                d3.selectAll(".c2p2.matrixSpatialRect" + data.seg_id_nat)
                     .lower()
-                d3.selectAll(".cell.segment" + data.seg_id_nat)
+                d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
                     .lower()
-                d3.selectAll(".delaware_bay")
+                d3.selectAll(".c2p2.delaware_bay")
                     .style("fill", "#6079a3")
-                d3.selectAll(".river_segments")
+                d3.selectAll(".c2p2.river_segments")
                     .style("stroke", "#6079a3")
-                d3.selectAll(".river_segments.seg" + data.seg_id_nat)
+                d3.selectAll(".c2p2.river_segments.seg" + data.seg_id_nat)
                     .style("stroke", "#6079a3")
                     .attr("opacity", 1)
                     .attr("filter","None")
                     .lower()
                 d3.selectAll("g")
                     .raise()
-            } else {
-               console.log("spatial mouseout, temporal data: ")
-               console.log(data)
-            }
+            } 
 
-        } else if (expressed = 'Time') {
-            console.log("temporal mouseout data: ")
-            console.log(data)
+        } else if (expressed_c2p2 = 'Time') {
 
-            d3.selectAll(".matrixSpatialRect")
+            d3.selectAll(".c2p2.matrixSpatialRect")
                 .style("fill", "#000000") // #ffffff
                 .style("stroke", "#000000")
                 .style("stroke-width", 2)
@@ -813,38 +784,30 @@
             if (data.total_annual_count)  {
                 tooltip
                     .style("opacity", 0)
-                d3.selectAll(".matrixTemporalRect") 
+                d3.selectAll(".c2p2.matrixTemporalRect") 
                     .style("stroke", "#000000") // #ffffff
                     .style("fill", "#000000") // #ffffff
                     .style("stroke-width", 2)
                     .style("opacity", 0)
-                d3.selectAll(".delaware_bay")
+                d3.selectAll(".c2p2.delaware_bay")
                     .style("fill", "#6079a3")
-                d3.selectAll(".river_segments")
-                    .style("stroke", "#6079a3")
-                    // .attr("opacity", 1)
-                    // .attr("filter","None")
-                d3.selectAll(".river_segments.year" + data.year)
+                d3.selectAll(".c2p2.river_segments")
                     .style("stroke", "#6079a3")
                     .attr("opacity", 1)
-                    // .attr("filter","None")
+                d3.selectAll(".c2p2.river_segments.year" + data.year)
+                    .style("stroke", "#6079a3")
+                    .attr("opacity", 1)
                     .lower()
-                
-            } else {
-                console.log("temporal mouseout, spatial data:")
-                console.log(data)
-            }
+            } 
         }
 
     };
 
     // *********************************************************************//
     // fuction to create a dropdown menu for attribute selection
-    function createDropdown_matrixMapOne(selectList_matrixMapOne, csv_matrix, csv_annual_count, segments){
-        console.log("createDropdown:")
-        console.log(segments)
+    function createDropdown_c2p2(selectList_c2p2, csv_matrix, csv_annual_count, segments){
         // add select element
-        var dropdown = d3.select("#matrixChartOne")
+        var dropdown = d3.select("#matrixChart_c2p2")
             // append the select element to the body
             .append("select")
             // add class for styling
@@ -852,7 +815,7 @@
             // add event listener
             .on("change", function(){
                 // call listener handler function
-                changeInteractionDimension_matrixMapOne(this.value, csv_matrix, csv_annual_count, segments)
+                changeInteractionDimension_c2p2(this.value, csv_matrix, csv_annual_count, segments)
             });
 
         // add initial option
@@ -862,12 +825,12 @@
             // ensure that users cannot select it
             .attr("disabled", "true")
             // add an affordance to let users know they can interact with the dropdown menu
-            .text("Interaction Dimension: " + expressed);
+            .text("Interaction Dimension: " + expressed_c2p2);
 
         // add attribute name options
         var attrOptions = dropdown.selectAll("attrOptions")
             // bind data to the elements to be created
-            .data(selectList_matrixMapOne)
+            .data(selectList_c2p2)
             // create an element for each datum
             .enter()
             // append to the option
@@ -881,13 +844,9 @@
     };
 
     // *********************************************************************//
-    function changeInteractionDimension_matrixMapOne(dimension, csv_matrix, csv_annual_count, segments){
-        console.log("changeInteractionDimension:")
-        console.log(segments)
-
-        // reset expressed dimension based on selected dimension
-        expressed = dimension;
-
+    function changeInteractionDimension_c2p2(dimension, csv_matrix, csv_annual_count, segments){
+        // reset expressed_c2p2 dimension based on selected dimension
+        expressed_c2p2 = dimension;
     };
 
     // *********************************************************************//
@@ -895,19 +854,19 @@
     // *********************************************************************//
     // *********************************************************************//
 
-    function setSegments_matrixMapTwo(segments, stations, bay, map, map_path, widthScale, colorScale){
+    function setSegments_c2p3(segments, stations, bay, map, map_path, widthScale, colorScale){
             
         // add delaware bay to map
         var drb_bay = map.append("path")
             .datum(bay)
-            .attr("class", "delaware_bay")
+            .attr("class", "c2p3 delaware_bay")
             .attr("d", map_path);
 
         // set tooltip
-        var tooltip = d3.select("#DRB_matrixMapTwo")
+        var tooltip = d3.select("#DRB_map_c2p3")
             .append("div")
             .style("opacity", 0)
-            .attr("class", "tooltip")
+            .attr("class", "c2p3 tooltip")
             // .style("background-color", "white")
             // .style("border", "solid")
             // .style("border-width", "2px")
@@ -916,7 +875,7 @@
 
 
         // add drb segments to map
-        var drb_segments = map.selectAll(".river_segments")
+        var drb_segments = map.selectAll("river_segments")
             // bind segments to each element to be created
             .data(segments)
             // create an element for each datum
@@ -925,7 +884,7 @@
             .append("path")
             // assign class for styling
             .attr("class", function(d){
-                var seg_class = 'river_segments seg'
+                var seg_class = 'c2p3 river_segments seg'
                 seg_class += d.seg_id_nat
                 for (key in d.properties.year_count) {
                     if (d.properties.year_count[key]) {
@@ -934,7 +893,7 @@
                 }
                 return seg_class
 
-                // return "river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
+                // return "c2p3 river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
             })
             // add filter
             // .attr("filter", "url(#shadow1)")
@@ -951,24 +910,16 @@
             })
             .style("fill", "None")
             .on("mouseover", function(d) {
-                mouseover_matrixMapOne(d, tooltip);
+                mouseover_c2p3(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveSegSpatial_matrixMapOne(d, tooltip, position);
+                mousemoveSegSpatial_c2p3(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseout_matrixMapOne(d, tooltip);
+                mouseout_c2p3(d, tooltip);
             });
-            // // set color based on colorScale function
-            // .style("stroke", function(d){
-            //     var value = d.properties['total_count'];
-            //     if(value){
-            //       return colorScale(value);
-            //     } else {
-            //       return "#ccc";
-            //     };
-            // });
+
         
         // // add drb stations to map
         // var drb_stations = map.selectAll(".obs_stations")
@@ -980,7 +931,7 @@
         //     .append("path")
         //     // assign class for styling
         //     .attr("class", function(d){
-        //         return "obs_stations station" + d.id
+        //         return "c2p3 obs_stations station" + d.id
         //     })
         //     // project points
         //     .attr("d", path)
@@ -988,27 +939,16 @@
         //     .style("fill", "Red")
         //     .style("stroke", "None")
             // .on("mouseover", function(d) {
-            //     mouseover(d, tooltip);
+            //     mouseover_c2p3(d, tooltip);
             // })
             // .on("mousemove", function(d) {
             //     position = d3.mouse(this);
-            //     mousemoveSegSpatial_matrixMapOne(d, tooltip, position);
+            //     mousemoveSegSpatial_c2p3(d, tooltip, position);
             // })
             // .on("mouseleave", function(d) {
-            //     mouseleave(d, tooltip);
-            // });
-            // // set color based on colorScale function
-            // .style("stroke", function(d){
-            //     var value = d.properties['total_count'];
-            //     if(value){
-            //       return colorScale(value);
-            //     } else {
-            //       return "#ccc";
-            //     };
+            //     mouseleave_c2p3(d, tooltip);
             // });
     };
-
-
 
 
 })();
