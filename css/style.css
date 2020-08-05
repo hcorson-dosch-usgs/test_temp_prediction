@@ -36,6 +36,12 @@ body {
   left: 20px;
 }
 
+.c2p3.matrix {
+  margin-top: 5px;
+  position: absolute;
+  left: 20px;
+}
+
 .matrixAxis {
   color: #7a7a7a;
 }

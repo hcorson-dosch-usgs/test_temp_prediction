@@ -7,7 +7,7 @@
 
     // initial attributes for panels
     var expressed_c2p2 = 'Space';
-    var expressed_c2p3 = 'Space';
+    var expressed_c2p3 = 'Time';
 
     // begin script when window loads
     window.onload = setPanels();
@@ -22,8 +22,9 @@
 
     // margins, width and height for matrix charts
     var matrix_margin = {top: 20, right: 15, bottom: 15, left: 35},
-        matrix_width = 500 - matrix_margin.left - matrix_margin.right,
-        matrix_height_c2p2 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom;
+        matrix_width_c2p2 = 500 - matrix_margin.left - matrix_margin.right,
+        matrix_width_c2p3 = 700 - matrix_margin.left - matrix_margin.right,
+        matrix_height_c2p2 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom,
         matrix_height_c2p3 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom;
 
     // *********************************************************************//
@@ -57,9 +58,9 @@
         .attr("width", map_width)
         .attr("height", map_height);
         
-        // parallelize asynchronous data loading d3.json("data/Segments_subset_4per_smooth.json"),
+        // parallelize asynchronous data loading 
         var promises = [d3.csv("data/segment_maflow.csv"),
-                        d3.csv("data/matrix_annual_obs.csv"), /* matrix_segment_yearmonth_counts */
+                        d3.csv("data/matrix_annual_obs.csv"), 
                         d3.csv("data/obs_annual_count.csv"),
                         d3.csv("data/matrix_daily_2019_obs.csv"),
                         d3.csv("data/obs_daily_count_2019.csv"),
@@ -114,10 +115,11 @@
             // // Set up panel 3 - 
             // // add DRB segments to the panel 3 map
             setSegments_c2p3(segments, stations, bay, map_c2p3, map_path, widthScale, colorScale);
-            // // create matrixTwo
-            // createMatrix_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments, timestep_c2p3);
             // // create dropdown for panel 3 matrix
-            // createDropdown_c2p3(selectList_c2p3, csv_matrix_daily_2019, csv_daily_count_2019, segments)
+            createDropdown_c2p3(selectList_c2p3)
+            // // create panel 3 matrix
+            createMatrix_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments, timestep_c2p3);
+
 
         };
     };
@@ -319,7 +321,7 @@
                 seg_class += d.seg_id_nat
                 for (key in d.properties.year_count) {
                     if (d.properties.year_count[key]) {
-                        seg_class += " year" + key
+                        seg_class += " " + timestep_c2p2 + key
                     }
                 }
                 return seg_class
@@ -399,12 +401,58 @@
     };
 
     // *********************************************************************//
+    // fuction to create a dropdown menu for attribute selection
+    function createDropdown_c2p2(selectList_c2p2){ 
+        // add select element
+        var dropdown = d3.select("#matrixChart_c2p2")
+            // append the select element to the body
+            .append("select")
+            // add class for styling
+            .attr("class", "dropdown")
+            // add event listener
+            .on("change", function(){
+                // call listener handler function
+                changeInteractionDimension_c2p2(this.value) 
+            });
+
+        // add initial option
+        var titleOption = dropdown.append("option")
+            // create a title option element with no value attribute
+            .attr("class", "titleOption")
+            // ensure that users cannot select it
+            .attr("disabled", "true")
+            // add an affordance to let users know they can interact with the dropdown menu
+            .text("Interaction Dimension: " + expressed_c2p2);
+
+        // add attribute name options
+        var attrOptions = dropdown.selectAll("attrOptions")
+            // bind data to the elements to be created
+            .data(selectList_c2p2)
+            // create an element for each datum
+            .enter()
+            // append to the option
+            .append("option")
+            // set value of attributes
+            .attr("value", function(d){ return d })
+            // set text element
+            .text(function(d){ 
+                return "Interaction Dimension: " +d 
+            });
+    };
+
+    // *********************************************************************//
+    function changeInteractionDimension_c2p2(dimension){ 
+        // reset expressed_c2p2 dimension based on selected dimension
+        expressed_c2p2 = dimension;
+    };
+
+    // *********************************************************************//
     function createMatrix_c2p2(csv_matrix_annual, csv_annual_count, segments, timestep_c2p2){
        
         // append the svg object ot the body of the page
         var svgMatrix = d3.select("#matrixChart_c2p2")
             .append("svg")
-                .attr("width", matrix_width + matrix_margin.left + matrix_margin.right)
+                .attr("width", matrix_width_c2p2 + matrix_margin.left + matrix_margin.right)
                 .attr("height", matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)
                 .attr("class", "c2p2 matrix")
             .append("g")
@@ -413,8 +461,8 @@
                     "translate(" + matrix_margin.left + "," + matrix_margin.top + ")");
 
         // read in data
-        var myGroups = d3.map(csv_matrix_annual, function(d){return d[timestep_c2p2];}).keys() /* d.yearmonth if temporal interval = yearmonth */
-        var myVars = d3.map(csv_matrix_annual, function(d){return d.seg_id_nat;}).keys() /* d.seg_id_nat */
+        var myGroups = d3.map(csv_matrix_annual, function(d){return d[timestep_c2p2];}).keys() 
+        var myVars = d3.map(csv_matrix_annual, function(d){return d.seg_id_nat;}).keys() 
 
         // build array of all values of observation counts
         var domainArrayTemporalCounts = [];
@@ -435,7 +483,7 @@
 
         // build x scales
         var x = d3.scaleBand()
-            .range([0,matrix_width])
+            .range([0,matrix_width_c2p2])
             .domain(myGroups)
             .padding(0.1);
 
@@ -464,7 +512,7 @@
             })
             .append("rect")
             .attr("x", function (d){
-                return x(d.year)
+                return x(d[timestep_c2p2])
             })
             .attr("y", function(d) { 
                 return y(d.seg_id_nat)
@@ -514,7 +562,7 @@
             // .select(".domain").remove()
         svgMatrix.append("g")
             .style("font-size", 0)
-            .attr("transform", "translate(" + matrix_width + "," + 0 + ")")
+            .attr("transform", "translate(" + matrix_width_c2p2 + "," + 0 + ")")
             .attr("class", "c2p2 matrixAxis right")
             .call(d3.axisRight(y).tickSize(0))
 
@@ -528,15 +576,15 @@
         // var matrixRectangles = svgMatrix.selectAll('matrixRect')
 
         // read in data
-        var myGroups = d3.map(csv_matrix_annual, function(d){return d[timestep_c2p2];}).keys() /* d.yearmonth if temporal interval = yearmonth */
-        var myVars = d3.map(csv_matrix_annual, function(d){return d.seg_id_nat;}).keys() /* d.seg_id_nat */
+        var myGroups = d3.map(csv_matrix_annual, function(d){return d[timestep_c2p2];}).keys() 
+        var myVars = d3.map(csv_matrix_annual, function(d){return d.seg_id_nat;}).keys() 
 
         // var temporalCountMin = Math.round(Math.min(...domainArrayTemporalCounts));
         // console.log(temporalCountMin)
 
         // build x scales
         var xscale = d3.scaleBand()
-            .range([0,matrix_width])
+            .range([0,matrix_width_c2p2])
             .domain(myGroups)
             .padding(0.1);
 
@@ -562,11 +610,11 @@
             .data(segments)
             .enter()
             .append("rect")
-            .attr("x", xscale("1980")) /* d.yearmonth if temporal interval = yearmonth */
+            .attr("x", xscale("1980")) 
             .attr("y", function(d) { return yscale(d.seg_id_nat) }) /* d.seg_id_nat */
             // .attr("rx", 1)
             // .attr("ry", 1)
-            .attr("width", matrix_width)
+            .attr("width", matrix_width_c2p2)
             .attr("height", yscale.bandwidth() )
             .attr("class", function(d) { 
                 return 'c2p2 matrixSpatialRect seg' + d.seg_id_nat;
@@ -615,7 +663,7 @@
             .attr("width", xscale.bandwidth())
             .attr("height", matrix_height_c2p2)
             .attr("class", function(d) { 
-                return 'c2p2 matrixTemporalRect time' + d.year;
+                return 'c2p2 matrixTemporalRect time' + d[timestep_c2p2];
             })
             .style("fill", "#000000") // "#ffffff"
             .style("stroke-width", 2)
@@ -638,7 +686,7 @@
         if (expressed_c2p2 == 'Space') {
             if (data.properties) {
                 var num_obs = data.properties.total_count;
-                yoffset = position[1]+10
+                var yoffset = position[1]+10
                 tooltip
                     .html(d3.format(',')(num_obs) + "<p>obs.")
                     // .html("Segment " + data.seg_id_nat)
@@ -648,10 +696,10 @@
             }
         } else if (expressed_c2p2 = 'Time') {
             if (data.total_annual_count) {
-                xoffset = position[0]+10
-                yoffset = position[1]-5
+                var xoffset = position[0]+10
+                var yoffset = position[1]-5
                 tooltip
-                    .html(data.year)
+                    .html(data[timestep_c2p2])
                     .style("left", xoffset + "px")
                     .style("top", yoffset + "px");
             }
@@ -732,13 +780,13 @@
                 d3.selectAll(".c2p2.matrixTemporalRect")
                     .style("opacity", 0.8)
                     .style("stroke-width", 2);
-                d3.selectAll(".c2p2.matrixTemporalRect.time" + data.year)
+                d3.selectAll(".c2p2.matrixTemporalRect.time" + data[timestep_c2p2])
                     .style("opacity", 0)
                 d3.selectAll(".c2p2.delaware_bay")
                     .style("fill", "#172c4f")
                 d3.selectAll(".c2p2.river_segments")
                     .style("stroke", "#172c4f")
-                d3.selectAll(".c2p2.river_segments.year" + data.year)
+                d3.selectAll(".c2p2.river_segments." + timestep_c2p2 + data[timestep_c2p2])
                     .style("stroke", "#ffffff")
                     .attr("opacity", 1)
                     .raise()
@@ -802,59 +850,13 @@
                 d3.selectAll(".c2p2.river_segments")
                     .style("stroke", "#6079a3")
                     .attr("opacity", 1)
-                d3.selectAll(".c2p2.river_segments.year" + data.year)
+                d3.selectAll(".c2p2.river_segments." + timestep_c2p2 + data[timestep_c2p2])
                     .style("stroke", "#6079a3")
                     .attr("opacity", 1)
                     .lower()
             } 
         }
 
-    };
-
-    // *********************************************************************//
-    // fuction to create a dropdown menu for attribute selection
-    function createDropdown_c2p2(selectList_c2p2){ 
-        // add select element
-        var dropdown = d3.select("#matrixChart_c2p2")
-            // append the select element to the body
-            .append("select")
-            // add class for styling
-            .attr("class", "dropdown")
-            // add event listener
-            .on("change", function(){
-                // call listener handler function
-                changeInteractionDimension_c2p2(this.value) 
-            });
-
-        // add initial option
-        var titleOption = dropdown.append("option")
-            // create a title option element with no value attribute
-            .attr("class", "titleOption")
-            // ensure that users cannot select it
-            .attr("disabled", "true")
-            // add an affordance to let users know they can interact with the dropdown menu
-            .text("Interaction Dimension: " + expressed_c2p2);
-
-        // add attribute name options
-        var attrOptions = dropdown.selectAll("attrOptions")
-            // bind data to the elements to be created
-            .data(selectList_c2p2)
-            // create an element for each datum
-            .enter()
-            // append to the option
-            .append("option")
-            // set value of attributes
-            .attr("value", function(d){ return d })
-            // set text element
-            .text(function(d){ 
-                return "Interaction Dimension: " +d 
-            });
-    };
-
-    // *********************************************************************//
-    function changeInteractionDimension_c2p2(dimension){ 
-        // reset expressed_c2p2 dimension based on selected dimension
-        expressed_c2p2 = dimension;
     };
 
     // *********************************************************************//
@@ -896,7 +898,7 @@
                 seg_class += d.seg_id_nat
                 for (key in d.properties.day_count) {
                     if (d.properties.day_count[key]) {
-                        seg_class += " day" + key
+                        seg_class += " " + timestep_c2p3 + key
                     }
                 }
                 return seg_class
@@ -959,12 +961,58 @@
     };
 
     // *********************************************************************//
+    // fuction to create a dropdown menu for attribute selection
+    function createDropdown_c2p3(selectList_c2p3, csv_matrix_daily_2019, csv_daily_count_2019, segments){
+        // add select element
+        var dropdown = d3.select("#matrixChart_c2p3")
+            // append the select element to the body
+            .append("select")
+            // add class for styling
+            .attr("class", "dropdown")
+            // add event listener
+            .on("change", function(){
+                // call listener handler function
+                changeInteractionDimension_c2p3(this.value, csv_matrix_daily_2019, csv_daily_count_2019, segments)
+            });
+
+        // add initial option
+        var titleOption = dropdown.append("option")
+            // create a title option element with no value attribute
+            .attr("class", "titleOption")
+            // ensure that users cannot select it
+            .attr("disabled", "true")
+            // add an affordance to let users know they can interact with the dropdown menu
+            .text("Interaction Dimension: " + expressed_c2p3);
+
+        // add attribute name options
+        var attrOptions = dropdown.selectAll("attrOptions")
+            // bind data to the elements to be created
+            .data(selectList_c2p3)
+            // create an element for each datum
+            .enter()
+            // append to the option
+            .append("option")
+            // set value of attributes
+            .attr("value", function(d){ return d })
+            // set text element
+            .text(function(d){ 
+                return "Interaction Dimension: " +d 
+            });
+    };
+
+    // *********************************************************************//
+    function changeInteractionDimension_c2p3(dimension, csv_matrix_daily_2019, csv_daily_count_2019, segments){
+        // reset expressed_c2p3 dimension based on selected dimension
+        expressed_c2p3 = dimension;
+    };
+
+    // *********************************************************************//
     function createMatrix_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments, timestep_c2p3){
        
         // append the svg object ot the body of the page
         var svgMatrix = d3.select("#matrixChart_c2p3")
             .append("svg")
-                .attr("width", matrix_width + matrix_margin.left + matrix_margin.right)
+                .attr("width", matrix_width_c2p3 + matrix_margin.left + matrix_margin.right)
                 .attr("height", matrix_height_c2p3 + matrix_margin.top + matrix_margin.bottom)
                 .attr("class", "c2p3 matrix")
             .append("g")
@@ -973,29 +1021,32 @@
                     "translate(" + matrix_margin.left + "," + matrix_margin.top + ")");
 
         // read in data
-        var myGroups = d3.map(csv_matrix_annual, function(d){return d[timestep_c2p3];}).keys() /* d.yearmonth if temporal interval = yearmonth */
-        var myVars = d3.map(csv_matrix_annual, function(d){return d.seg_id_nat;}).keys() /* d.seg_id_nat */
+        var myGroups = d3.map(csv_matrix_daily_2019, function(d){return d[timestep_c2p3];}).keys() 
+        var myVars = d3.map(csv_matrix_daily_2019, function(d){return d.seg_id_nat;}).keys() 
 
-        // build array of all values of observation counts
-        var domainArrayTemporalCounts = [];
-        for (var i=0; i<csv_matrix_annual.length; i++){
-            var val = parseFloat(csv_matrix_annual[i]['obs_count']);
-            // if (val){
-            domainArrayTemporalCounts.push(val);
-            // } else {
-                // continue
-            // }
+        // build array of all values of observed temperature
+        var arrayObsTemps = [];
+        for (var i=0; i<csv_matrix_daily_2019.length; i++){
+            var val = parseFloat(csv_matrix_daily_2019[i]['temp_c']);
+            if (val){
+                arrayObsTemps.push(val);
+            } else {
+                continue
+            }
         };
 
-        var temporalCountMax = Math.round(Math.max(...domainArrayTemporalCounts));
-        console.log(temporalCountMax)
+        console.log("temp list")
+        console.log(arrayObsTemps)
 
-        // var temporalCountMin = Math.round(Math.min(...domainArrayTemporalCounts));
-        // console.log(temporalCountMin)
+        var obsTempMax = Math.round(Math.max(...arrayObsTemps));
+        console.log(obsTempMax)
+
+        var obsTempMin = Math.round(Math.min(...arrayObsTemps));
+        console.log(obsTempMin)
 
         // build x scales
         var x = d3.scaleBand()
-            .range([0,matrix_width])
+            .range([0,matrix_width_c2p3])
             .domain(myGroups)
             .padding(0.1);
 
@@ -1007,13 +1058,13 @@
 
         // color scale
         var myColor = d3.scaleSequential()
-            .interpolator(d3.interpolatePlasma) /* interpolatePlasma */
-            // .domain([temporalCountMax,1]) // if INVERTING color scale
-            .domain([1, temporalCountMax]) // if NOT INVERTING color scale
+            .interpolator(d3.interpolateRdYlBu) /* interpolatePlasma */
+            .domain([obsTempMax,obsTempMin]) // if INVERTING color scale
+            // .domain([obsTempMin, obsTempMax]) // if NOT INVERTING color scale
               
         // add the squares
         var matrixSquares = svgMatrix.selectAll('matrixSqs')
-            .data(csv_matrix_annual, function(d) {
+            .data(csv_matrix_daily_2019, function(d) {
                 if (d.total_obs > 0) {
                     return d[timestep_c2p3] +':'+ d.seg_id_nat; /* d.seg_id_nat */
                 }
@@ -1024,7 +1075,7 @@
             })
             .append("rect")
             .attr("x", function (d){
-                return x(d.year)
+                return x(d[timestep_c2p3])
             })
             .attr("y", function(d) { 
                 return y(d.seg_id_nat)
@@ -1040,24 +1091,29 @@
                 return 'c2p3 cell segment' + d.seg_id_nat + ' timestep' + d[timestep_c2p3]
             })
             .style("fill", function(d) {
-                return myColor(d.obs_count);
+                return myColor(d.temp_c);
             })
             .style("stroke-width", 0.5)
             // .style("stroke", "None") //"None"
             .style("stroke", function(d){
-                return myColor(d.obs_count);
+                return myColor(d.temp_c);
             })
             .style("opacity", 1);
 
         // add the rectangles
-        createMatrixRectangles_c2p3(csv_matrix_annual, csv_annual_count, segments)
+        createMatrixRectangles_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments)
 
         // draw x axes
+        var parseTime = d3.timeParse("%Y-%m-%d");
+        console.log(parseTime('2019-01-01'))
+        var formatTime = d3.timeFormat("%B");
+        console.log(formatTime(parseTime('2019-01-01')))
+
         svgMatrix.append("g")
             .style("font-size", 10)
             .attr("transform", "translate(" + 0 + "," + matrix_height_c2p3 + ")")
             .attr("class", "c2p3 matrixAxis bottom")
-            .call(d3.axisBottom(x).tickSize(0).tickValues(['1980', '1990', '2000', '2010', '2019'])) /* '1980-01', '1990-01', '2000-01', '2010-01', '2019-01' */
+            .call(d3.axisBottom(x).tickSize(0).tickValues(['2019-01-01', '2019-03-01', '2019-05-01', '2019-07-01', '2019-09-01', '2019-11-01'])) //.tickFormat(formatTime(parseTime()))
             // .select(".domain").remove()
         svgMatrix.append("g")
             .style("font-size", 0)
@@ -1074,29 +1130,29 @@
             // .select(".domain").remove()
         svgMatrix.append("g")
             .style("font-size", 0)
-            .attr("transform", "translate(" + matrix_width + "," + 0 + ")")
+            .attr("transform", "translate(" + matrix_width_c2p3 + "," + 0 + ")")
             .attr("class", "c2p3 matrixAxis right")
             .call(d3.axisRight(y).tickSize(0))
 
     };
 
     // *********************************************************************//
-    function createMatrixRectangles_c2p3(csv_matrix_annual, csv_annual_count, segments) {
+    function createMatrixRectangles_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments) {
 
         // create matrix recangles variable
         var transformedMatrix = d3.select(".c2p3.transformedMatrix")
         // var matrixRectangles = svgMatrix.selectAll('matrixRect')
 
         // read in data
-        var myGroups = d3.map(csv_matrix_annual, function(d){return d[timestep_c2p3];}).keys() /* d.yearmonth if temporal interval = yearmonth */
-        var myVars = d3.map(csv_matrix_annual, function(d){return d.seg_id_nat;}).keys() /* d.seg_id_nat */
+        var myGroups = d3.map(csv_matrix_daily_2019, function(d){return d[timestep_c2p3];}).keys() 
+        var myVars = d3.map(csv_matrix_daily_2019, function(d){return d.seg_id_nat;}).keys() 
 
         // var temporalCountMin = Math.round(Math.min(...domainArrayTemporalCounts));
         // console.log(temporalCountMin)
 
         // build x scales
         var xscale = d3.scaleBand()
-            .range([0,matrix_width])
+            .range([0,matrix_width_c2p3])
             .domain(myGroups)
             .padding(0.1);
 
@@ -1122,17 +1178,17 @@
             .data(segments)
             .enter()
             .append("rect")
-            .attr("x", xscale("1980")) /* d.yearmonth if temporal interval = yearmonth */
-            .attr("y", function(d) { return yscale(d.seg_id_nat) }) /* d.seg_id_nat */
+            .attr("x", xscale("2019-01-01")) 
+            .attr("y", function(d) { return yscale(d.seg_id_nat) }) 
             // .attr("rx", 1)
             // .attr("ry", 1)
-            .attr("width", matrix_width)
+            .attr("width", matrix_width_c2p3)
             .attr("height", yscale.bandwidth() )
             .attr("class", function(d) { 
                 return 'c2p3 matrixSpatialRect seg' + d.seg_id_nat;
             })
             .style("fill", function(d) { 
-                if (d.properties.total_count > 0) {
+                if (d.properties.year_count['2019'] > 0) {
                     return "#000000"; // "#ffffff"                  
                 } else {
                     return "#000000";  /*"#ffffff"*/
@@ -1141,7 +1197,7 @@
             .style("stroke-width", 2)
             .style("stroke", "#000000") // "#ffffff"
             .style("opacity", function(d) {
-                if (d.properties.total_count > 0) {
+                if (d.properties.year_count['2019'] > 0) {
                     return 0;                   
                 } else {
                     return 0; 
@@ -1163,7 +1219,7 @@
 
         // revised build of temporal rectangles
         var TemporalRectangles = transformedMatrix.selectAll('.c2p3.matrixTemporalRect')
-            .data(csv_annual_count)
+            .data(csv_daily_count_2019)
             .enter()
             .append("rect")
             .attr("x", function(d){
@@ -1175,10 +1231,10 @@
             .attr("width", xscale.bandwidth())
             .attr("height", matrix_height_c2p3)
             .attr("class", function(d) { 
-                return 'c2p3 matrixTemporalRect time' + d.year;
+                return 'c2p3 matrixTemporalRect time' + d[timestep_c2p3];
             })
             .style("fill", "#000000") // "#ffffff"
-            .style("stroke-width", 2)
+            .style("stroke-width", 0.5)
             .style("stroke", "#000000") // #ffffff"
             .style("opacity", 0)
             .on("mouseover", function(d) {
@@ -1197,8 +1253,8 @@
     function mousemoveRect_c2p3(data, tooltip, position) {
         if (expressed_c2p3 == 'Space') {
             if (data.properties) {
-                var num_obs = data.properties.total_count;
-                yoffset = position[1]+10
+                var num_obs = data.properties.year_count['2019'];
+                var yoffset = position[1]+10
                 tooltip
                     .html(d3.format(',')(num_obs) + "<p>obs.")
                     // .html("Segment " + data.seg_id_nat)
@@ -1207,11 +1263,11 @@
                     .style("text-align", "right");
             }
         } else if (expressed_c2p3 = 'Time') {
-            if (data.total_annual_count) {
-                xoffset = position[0]+10
-                yoffset = position[1]-5
+            if (data.total_daily_count) {
+                var xoffset = position[0]-15
+                var yoffset = position[1]-5
                 tooltip
-                    .html(data.year)
+                    .html(data[timestep_c2p3])
                     .style("left", xoffset + "px")
                     .style("top", yoffset + "px");
             }
@@ -1221,7 +1277,7 @@
     // *********************************************************************//
     function mousemoveSegSpatial_c2p3(data, tooltip, position) {
         if (expressed_c2p3 == 'Space') {
-            var num_obs = data.properties.total_count;
+            var num_obs = data.properties.year_count['2019'];
             tooltip
                 .html(d3.format(',')(num_obs) + "<p>obs.")
                 // .html("Segment " + data.seg_id_nat)
@@ -1249,21 +1305,21 @@
                     .raise()
                 d3.selectAll(".c2p3.matrixSpatialRect.seg" + data.seg_id_nat)
                     .style("stroke-width", function(data) {
-                        if (data.properties.total_count > 0) { //properties.total_count
+                        if (data.properties.year_count['2019'] > 0) { //properties.total_count
                             return 0;                   
                         } else {
                             return 0.5;
                         }
                     })
                     .style("opacity", function(data) {
-                        if (data.properties.total_count > 0) { //properties.total_count
+                        if (data.properties.year_count['2019'] > 0) { //properties.total_count
                             return 0;                   
                         } else {
                             return 1;
                         }
                     })
                     .style("stroke", function(data) {
-                        if (data.properties.total_count > 0) {
+                        if (data.properties.year_count['2019'] > 0) {
                             return "None";                   
                         } else {
                             return "#ffffff"; //red
@@ -1281,24 +1337,26 @@
                     .raise()
             } 
         } else if (expressed_c2p3 = 'Time') {
+            console.log(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
 
             d3.selectAll(".c2p3.matrixSpatialRect")
                 .style("fill", "None")
                 .style("stroke", "None")
 
-            if (data.total_annual_count) {
+            if (data.total_daily_count) {
                 tooltip
-                    .style("opacity", 1);
+                    .style("opacity", 1)
                 d3.selectAll(".c2p3.matrixTemporalRect")
                     .style("opacity", 0.8)
-                    .style("stroke-width", 2);
-                d3.selectAll(".c2p3.matrixTemporalRect.time" + data.year)
+                    .style("stroke", "rgba(0, 0, 0, 0.2)")
+                    .style("stroke-width", 0.5)
+                d3.selectAll(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
                     .style("opacity", 0)
                 d3.selectAll(".c2p3.delaware_bay")
                     .style("fill", "#172c4f")
                 d3.selectAll(".c2p3.river_segments")
                     .style("stroke", "#172c4f")
-                d3.selectAll(".c2p3.river_segments.year" + data.year)
+                d3.selectAll(".c2p3.river_segments." + timestep_c2p3 + data[timestep_c2p3])
                     .style("stroke", "#ffffff")
                     .attr("opacity", 1)
                     .raise()
@@ -1349,20 +1407,21 @@
                 .style("stroke", "#000000")
                 .style("stroke-width", 2)
 
-            if (data.total_annual_count)  {
+            if (data.total_daily_count)  {
                 tooltip
                     .style("opacity", 0)
                 d3.selectAll(".c2p3.matrixTemporalRect") 
                     .style("stroke", "#000000") // #ffffff
                     .style("fill", "#000000") // #ffffff
-                    .style("stroke-width", 2)
+                    .style("stroke-width", 0.5)
+                    .style("stroke-opacity", 0)
                     .style("opacity", 0)
                 d3.selectAll(".c2p3.delaware_bay")
                     .style("fill", "#6079a3")
                 d3.selectAll(".c2p3.river_segments")
                     .style("stroke", "#6079a3")
                     .attr("opacity", 1)
-                d3.selectAll(".c2p3.river_segments.year" + data.year)
+                d3.selectAll(".c2p3.river_segments." + timestep_c2p3 + data[timestep_c2p3])
                     .style("stroke", "#6079a3")
                     .attr("opacity", 1)
                     .lower()
@@ -1371,50 +1430,6 @@
 
     };
 
-    // *********************************************************************//
-    // fuction to create a dropdown menu for attribute selection
-    function createDropdown_c2p3(selectList_c2p3, csv_matrix_daily_2019, csv_daily_count_2019, segments){
-        // add select element
-        var dropdown = d3.select("#matrixChart_c2p3")
-            // append the select element to the body
-            .append("select")
-            // add class for styling
-            .attr("class", "dropdown")
-            // add event listener
-            .on("change", function(){
-                // call listener handler function
-                changeInteractionDimension_c2p3(this.value, csv_matrix_daily_2019, csv_daily_count_2019, segments)
-            });
 
-        // add initial option
-        var titleOption = dropdown.append("option")
-            // create a title option element with no value attribute
-            .attr("class", "titleOption")
-            // ensure that users cannot select it
-            .attr("disabled", "true")
-            // add an affordance to let users know they can interact with the dropdown menu
-            .text("Interaction Dimension: " + expressed_c2p3);
-
-        // add attribute name options
-        var attrOptions = dropdown.selectAll("attrOptions")
-            // bind data to the elements to be created
-            .data(selectList_c2p3)
-            // create an element for each datum
-            .enter()
-            // append to the option
-            .append("option")
-            // set value of attributes
-            .attr("value", function(d){ return d })
-            // set text element
-            .text(function(d){ 
-                return "Interaction Dimension: " +d 
-            });
-    };
-
-    // *********************************************************************//
-    function changeInteractionDimension_c2p3(dimension, csv_matrix_daily_2019, csv_daily_count_2019, segments){
-        // reset expressed_c2p3 dimension based on selected dimension
-        expressed_c2p3 = dimension;
-    };
 
 })();
