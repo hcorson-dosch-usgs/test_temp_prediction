@@ -7,7 +7,7 @@
 
     // initial attributes for panels
     var expressed_c2p2 = 'Space';
-    var expressed_c2p3 = 'Time';
+    var expressed_c2p3 = 'Space';
 
     // begin script when window loads
     window.onload = setPanels();
@@ -22,7 +22,7 @@
 
     // margins, width and height for matrix charts
     var matrix_margin = {top: 20, right: 15, bottom: 15, left: 35},
-        matrix_width_c2p2 = 500 - matrix_margin.left - matrix_margin.right,
+        matrix_width_c2p2 = 700 - matrix_margin.left - matrix_margin.right, //500
         matrix_width_c2p3 = 700 - matrix_margin.left - matrix_margin.right,
         matrix_height_c2p2 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom,
         matrix_height_c2p3 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom;
@@ -45,18 +45,25 @@
             .projection(map_projection);
 
         //create new svg container for the panel 2 map
+        var map_c2p1 = d3.select("#DRB_map_c2p1")
+            .append("svg")
+            .attr("class", "map_c2p1")
+            .attr("width", map_width)
+            .attr("height", map_height);
+
+        //create new svg container for the panel 2 map
         var map_c2p2 = d3.select("#DRB_map_c2p2")
-        .append("svg")
-        .attr("class", "map_c2p2")
-        .attr("width", map_width)
-        .attr("height", map_height);
+            .append("svg")
+            .attr("class", "map_c2p2")
+            .attr("width", map_width)
+            .attr("height", map_height);
 
         // create new svg container for map_c2p3
         var map_c2p3 = d3.select("#DRB_map_c2p3")
-        .append("svg")
-        .attr("class", "map_c2p3")
-        .attr("width", map_width)
-        .attr("height", map_height);
+            .append("svg")
+            .attr("class", "map_c2p3")
+            .attr("width", map_width)
+            .attr("height", map_height);
         
         // parallelize asynchronous data loading 
         var promises = [d3.csv("data/segment_maflow.csv"),
@@ -102,6 +109,10 @@
 
             // stroke color scale
             var colorScale = makeColorScale(segments);
+
+            // // Set up panel 1 -
+            // add DRB segments to the panel 1 map
+            setSegments_c2p1(segments, stations, bay, map_c2p1, map_path, widthScale, colorScale);
 
             // // Set up panel 2 - 
             // add DRB segments to the panel 2 map
@@ -287,6 +298,190 @@
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
+    function setSegments_c2p1(segments, stations, bay, map, map_path, widthScale, colorScale){
+            
+        // add delaware bay to map
+        var drb_bay = map.append("path")
+            .datum(bay)
+            .attr("class", "c2p1 delaware_bay")
+            .attr("d", map_path)
+            .on("mouseover", function(d) {
+                mouseover_c2p1(d, tooltip);
+            })
+            .on("mousemove", function(d) {
+                position = d3.mouse(this);
+                mousemoveSegSpatial_c2p1(d, tooltip, position);
+            })
+            .on("mouseout", function(d) {
+                mouseout_c2p1(d, tooltip);
+            });
+
+        // set tooltip
+        var tooltip = d3.select("#DRB_map_c2p1")
+            .append("div")
+            .style("opacity", 0)
+            .attr("class", "c2p1 tooltip")
+            // .style("background-color", "white")
+            // .style("border", "solid")
+            // .style("border-width", "2px")
+            // .style("border-radius", "5px")
+            .style("padding", "5px")
+
+
+        // add drb segments to map
+        var drb_segments = map.selectAll(".river_segments")
+            // bind segments to each element to be created
+            .data(segments)
+            // create an element for each datum
+            .enter()
+            // append each element to the svg as a path element
+            .append("path")
+            // assign class for styling
+            .attr("class", function(d){
+                var seg_class = 'c2p1 river_segments seg'
+                seg_class += d.seg_id_nat
+                // for (key in d.properties.year_count) {
+                //     if (d.properties.year_count[key]) {
+                //         seg_class += " " + timestep_c2p1 + key
+                //     }
+                // }
+                return seg_class
+
+                // return "c2p1 river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
+            })
+            // add filter
+            // .attr("filter", "url(#shadow1)")
+            // project segments
+            .attr("d", map_path)
+            // add stroke width based on widthScale function
+            .style("stroke-width", function(d){
+                var value = d.properties['avg_ann_flow'];
+                if (value){
+                    return widthScale(value);
+                } else {
+                    return "#ccc";
+                }
+            })
+            .style("fill", "None")
+            .on("mouseover", function(d) {
+                mouseover_c2p1(d, tooltip);
+            })
+            .on("mousemove", function(d) {
+                position = d3.mouse(this);
+                mousemoveSegSpatial_c2p1(d, tooltip, position);
+            })
+            .on("mouseout", function(d) {
+                mouseout_c2p1(d, tooltip);
+            });
+            // // set color based on colorScale function
+            // .style("stroke", function(d){
+            //     var value = d.properties['total_count'];
+            //     if(value){
+            //       return colorScale(value);
+            //     } else {
+            //       return "#ccc";
+            //     };
+            // });
+        
+        // add drb stations to map
+        var drb_stations = map.selectAll(".obs_stations")
+            // bind segments to each element to be created
+            .data(stations)
+            // create an element for each datum
+            .enter()
+            // append each element to the svg as a circle element
+            .append("path")
+            // project points and SET SIZE
+            .attr("d", map_path.pointRadius(2))
+            // assign class for styling
+            .attr("class", function(d){
+                return "c2p2 obs_stations station" + d.id
+            })
+            .style("fill", "#ffffff")
+            .style("stroke", "#000000")
+            .style("stroke-width", 0.4)
+            .style("opacity", 0.7)
+            // .on("mouseover", function(d) {
+            //     mouseover_c2p1(d, tooltip);
+            // })
+            // .on("mousemove", function(d) {
+            //     position = d3.mouse(this);
+            //     mousemoveSegSpatial_c2p1(d, tooltip, position);
+            // })
+            // .on("mouseout", function(d) {
+            //     mouseout_c2p1(d, tooltip);
+            // });
+            // // set color based on colorScale function
+            // .style("stroke", function(d){
+            //     var value = d.properties['total_count'];
+            //     if(value){
+            //       return colorScale(value);
+            //     } else {
+            //       return "#ccc";
+            //     };
+            // });
+    };
+
+    // *********************************************************************//
+    function mousemoveSegSpatial_c2p1(data, tooltip, position) {
+        var num_obs = data.properties.total_count;
+        tooltip
+            .html(d3.format(',')(num_obs) + "<p>obs.")
+            // .html("Segment " + data.seg_id_nat)
+            .style("left", position[0]+35 + "px")
+            .style("top", position[1]-25 + "px")
+            .style("text-align", "left"); /* position[1]+110 */
+    };
+
+    // *********************************************************************//
+    function mouseover_c2p1(data, tooltip) {
+        // tooltip
+        //     .style("opacity", 1);
+        d3.selectAll(".c2p1.delaware_bay")
+            .style("fill", "#0b1b36")
+        d3.selectAll(".c2p1.river_segments")
+            .style("stroke", "#0b1b36")
+        // d3.selectAll(".c2p1.river_segments.seg" + data.seg_id_nat)
+        //     .style("stroke", "#ffffff")
+        //     .attr("opacity", 1)
+        //     .attr("filter", "url(#shadow1)")
+        //     .raise()
+        d3.selectAll(".c2p2.obs_stations")
+            .style("opacity", 1)
+        // d3.selectAll(".c2p2.obs_stations.station" + data.seg_id_nat)
+        //     .style("fill", "red")
+        //     .style("opacity", 1)
+        //     .raise()
+            
+    };
+
+    // *********************************************************************//
+    function mouseout_c2p1(data, tooltip) {
+        // tooltip
+        //     .style("opacity", 0)
+
+        d3.selectAll(".c2p1.delaware_bay")
+            .style("fill", "#6079a3")
+        d3.selectAll(".c2p1.river_segments")
+            .style("stroke", "#6079a3")
+        d3.selectAll(".c2p2.obs_stations")
+            .style("opacity", 1)
+            .style("fill", "#ffffff")
+        // d3.selectAll(".c2p2.obs_stations.station" + data.seg_id_nat)
+        //     .lower()  
+        // d3.selectAll(".c2p1.river_segments.seg" + data.seg_id_nat)
+        //     .style("stroke", "#6079a3")
+        //     .attr("opacity", 1)
+        //     .attr("filter","None")
+        //     .lower()
+
+
+    };    
+
+    // *********************************************************************//
+    // *********************************************************************//
+    // *********************************************************************//
+    // *********************************************************************//
     function setSegments_c2p2(segments, stations, bay, map, map_path, widthScale, colorScale){
             
         // add delaware bay to map
@@ -386,8 +581,8 @@
             //     position = d3.mouse(this);
             //     mousemoveSegSpatial_c2p2(d, tooltip, position);
             // })
-            // .on("mouseleave", function(d) {
-            //     mouseleave(d, tooltip);
+            // .on("mouseout", function(d) {
+            //     mouseout(d, tooltip);
             // });
             // // set color based on colorScale function
             // .style("stroke", function(d){
@@ -731,33 +926,42 @@
                 tooltip
                     .style("opacity", 1);
                 d3.selectAll(".c2p2.matrixSpatialRect")
-                    .style("opacity", 0.8)
+                    .style("opacity", 0.7)
                     .style("stroke-width", 1);
                 d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
                     .raise()
                 d3.selectAll(".c2p2.matrixSpatialRect.seg" + data.seg_id_nat)
+                    // .style("fill", function(data) {
+                    //     if (data.properties.total_count > 0) { //properties.total_count
+                    //         return "#363636";     //0              
+                    //     } else {
+                    //         return "#000000";
+                    //     }
+                    // })
                     .style("stroke-width", function(data) {
                         if (data.properties.total_count > 0) { //properties.total_count
-                            return 0;                   
+                            return 0;     //0.5              
                         } else {
                             return 0.5;
                         }
                     })
                     .style("opacity", function(data) {
                         if (data.properties.total_count > 0) { //properties.total_count
-                            return 0;                   
+                            return 0;       //1            
                         } else {
                             return 1;
                         }
                     })
                     .style("stroke", function(data) {
                         if (data.properties.total_count > 0) {
-                            return "None";                   
+                            return "None";       //"#363636"            
                         } else {
                             return "#ffffff"; //red
                         }
                     })
                     .raise();
+                // d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
+                //     .raise()
                 d3.selectAll(".c2p2.delaware_bay")
                     .style("fill", "#172c4f")
                 d3.selectAll(".c2p2.river_segments")
@@ -955,8 +1159,8 @@
             //     position = d3.mouse(this);
             //     mousemoveSegSpatial_c2p3(d, tooltip, position);
             // })
-            // .on("mouseleave", function(d) {
-            //     mouseleave_c2p3(d, tooltip);
+            // .on("mouseout", function(d) {
+            //     mouseout_c2p3(d, tooltip);
             // });
     };
 
@@ -1234,7 +1438,7 @@
                 return 'c2p3 matrixTemporalRect time' + d[timestep_c2p3];
             })
             .style("fill", "#000000") // "#ffffff"
-            .style("stroke-width", 0.5)
+            .style("stroke-width", 0.6)
             .style("stroke", "#000000") // #ffffff"
             .style("opacity", 0)
             .on("mouseover", function(d) {
@@ -1348,10 +1552,13 @@
                     .style("opacity", 1)
                 d3.selectAll(".c2p3.matrixTemporalRect")
                     .style("opacity", 0.8)
-                    .style("stroke", "rgba(0, 0, 0, 0.2)")
-                    .style("stroke-width", 0.5)
+                    // .style("stroke", "rgba(0, 0, 0, 0)")
+                    .style("stroke-width", 0.6)
+                // d3.selectAll(".c2p3.cell.timestep" + data[timestep_c2p3])
+                //     .raise()
                 d3.selectAll(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
                     .style("opacity", 0)
+                    // .raise()
                 d3.selectAll(".c2p3.delaware_bay")
                     .style("fill", "#172c4f")
                 d3.selectAll(".c2p3.river_segments")
@@ -1372,7 +1579,7 @@
             d3.selectAll(".c2p3.matrixTemporalRect")
                 .style("fill", "#000000")
                 .style("stroke", "#000000")
-                .style("stroke-width", 2) 
+                .style("stroke-width", 0.6) 
 
             if (data.properties) {
                 tooltip
@@ -1413,9 +1620,18 @@
                 d3.selectAll(".c2p3.matrixTemporalRect") 
                     .style("stroke", "#000000") // #ffffff
                     .style("fill", "#000000") // #ffffff
-                    .style("stroke-width", 0.5)
+                    .style("stroke-width", 0.6)
                     .style("stroke-opacity", 0)
                     .style("opacity", 0)
+                // d3.selectAll(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
+                    // .style("stroke", "#000000") // #ffffff
+                    // .style("fill", "#000000") // #ffffff
+                    // .style("stroke-width", 0.6)
+                    // .style("stroke-opacity", 0)
+                    // .style("opacity", 0)    
+                    // .lower()
+                // d3.selectAll(".c2p3.cell.timestep" + data[timestep_c2p3])
+                //     .raise()
                 d3.selectAll(".c2p3.delaware_bay")
                     .style("fill", "#6079a3")
                 d3.selectAll(".c2p3.river_segments")
