@@ -2,8 +2,9 @@
 body {
   margin-bottom: 0px;
   font-family: sans-serif;
+  font-size: 1em;
   background-color: black;
-  color: #ffffff;
+  color: #8f8f8f;
   text-align: center;
 }
 
@@ -29,10 +30,18 @@ body {
     fill: #6079a3; 
   }
 
+.buffered_Basin {
+  fill: #e71212; 
+}
+
 .river_segments {
   stroke: #6079a3;
   stroke-linecap: round;
   stroke-width: 0.5px;
+}
+
+.reservoirs {
+  fill:  #e71212; 
 }
 
 .c2p2.matrix {

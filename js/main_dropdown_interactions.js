@@ -5,12 +5,20 @@
     // variables for data join
     var flowArray = ['avg_ann_flow']
 
+    // initial attributes for panels
+    var expressed_c2p2 = 'Space';
+    var expressed_c2p3 = 'Space';
+
     // begin script when window loads
     window.onload = setPanels();
 
     // timestep variables
     var timestep_c2p2 = 'year'
     var timestep_c2p3 = 'date'
+
+    // selection list for dropdown
+    var selectList_c2p2 = ['Space', 'Time']
+    var selectList_c2p3 = ['Space', 'Time']
 
     // margins, width and height for matrix charts
     var matrix_margin = {top: 20, right: 15, bottom: 15, left: 35},
@@ -35,33 +43,6 @@
 
         var map_path = d3.geoPath()
             .projection(map_projection);
-
-        // create scale bar
-        const scaleBarTop = d3.geoScaleBar()
-            .orient(d3.geoScaleBottom)
-            .projection(map_projection)
-            .size([map_width, map_height])
-            .left(.15)
-            .top(.94)
-            .units(d3.geoScaleKilometers)
-            .distance(50)
-            .label("50 kilometers")
-            .labelAnchor("middle")
-            .tickSize(null)
-            .tickValues(null);
-
-        const scaleBarBottom = d3.geoScaleBar()
-            .orient(d3.geoScaleTop)
-            .projection(map_projection)
-            .size([map_width, map_height])
-            .left(.15)
-            .top(.95)
-            .units(d3.geoScaleMiles)
-            .distance(25)
-            .label("25 miles")
-            .labelAnchor("middle")
-            .tickSize(null)
-            .tickValues(null);
 
         //create new svg container for the panel 2 map
         var map_c2p1 = d3.select("#DRB_map_c2p1")
@@ -92,10 +73,7 @@
                         d3.csv("data/obs_daily_count_2019.csv"),
                         d3.json("data/segment_geojson.json"),
                         d3.json("data/observed_reach_station_coords.json"),
-                        d3.json("data/NHDWaterbody_DelawareBay_pt6per_smooth.json"),
-                        d3.json("data/reservoirs.json"),
-                        d3.json("data/dams.json"),
-                        d3.json("data/basin_buffered.json")
+                        d3.json("data/NHDWaterbody_DelawareBay_pt6per_smooth.json")
                     ];
         Promise.all(promises).then(callback);
 
@@ -110,27 +88,21 @@
             json_segments = data[5];
             json_obs_stations = data[6];
             json_bay = data[7];
-            json_reservoirs = data[8];
-            json_dams = data[9];
-            json_buffered_basin = data[10];
+
+            console.log(csv_matrix_daily_2019)
+            console.log(csv_daily_count_2019)
 
             // translate topojsons
             var segments = json_segments.features; /* topojson.feature(json_segments, json_segments.objects.Segments_subset_4per_smooth).features */
             var stations = json_obs_stations.features;
             var bay = topojson.feature(json_bay, json_bay.objects.NHDWaterbody_DelawareBay_pt6per_smooth);
-            var reservoirs = json_reservoirs.features;
-            var dams = json_dams.features;
-            var buffered_basin = json_buffered_basin.features
-
-            console.log(dams)
-            console.log(buffered_basin)
 
             // join csv data to geojson segments
             segments = joinData(segments, csv_flow);
 
             // check the results
-            // console.log('segments:')
-            // console.log(segments);
+            console.log('segments:')
+            console.log(segments);
 
             // stroke width scale
             var widthScale = makeWidthScale(csv_flow);
@@ -140,18 +112,22 @@
 
             // // Set up panel 1 -
             // add DRB segments to the panel 1 map
-            setSegments_c2p1(segments, stations, bay, map_c2p1, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale);
+            setSegments_c2p1(segments, stations, bay, map_c2p1, map_path, widthScale, colorScale);
 
             // // Set up panel 2 - 
             // add DRB segments to the panel 2 map
-            setSegments_c2p2(segments, stations, bay, reservoirs, dams, buffered_basin, map_c2p2, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale);
+            setSegments_c2p2(segments, stations, bay, map_c2p2, map_path, widthScale, colorScale);
+            // create dropdown for panel 2 matrix
+            createDropdown_c2p2(selectList_c2p2) 
             // create panel 2 matrix
             createMatrix_c2p2(csv_matrix_annual, csv_annual_count, segments, timestep_c2p2);
 
 
             // // Set up panel 3 - 
             // // add DRB segments to the panel 3 map
-            setSegments_c2p3(segments, stations, bay, map_c2p3, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale);
+            setSegments_c2p3(segments, stations, bay, map_c2p3, map_path, widthScale, colorScale);
+            // // create dropdown for panel 3 matrix
+            createDropdown_c2p3(selectList_c2p3)
             // // create panel 3 matrix
             createMatrix_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments, timestep_c2p3);
 
@@ -322,8 +298,8 @@
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
-    function setSegments_c2p1(segments, stations, bay, map, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale){
-                  
+    function setSegments_c2p1(segments, stations, bay, map, map_path, widthScale, colorScale){
+            
         // add delaware bay to map
         var drb_bay = map.append("path")
             .datum(bay)
@@ -331,6 +307,10 @@
             .attr("d", map_path)
             .on("mouseover", function(d) {
                 mouseover_c2p1(d, tooltip);
+            })
+            .on("mousemove", function(d) {
+                position = d3.mouse(this);
+                mousemoveSegSpatial_c2p1(d, tooltip, position);
             })
             .on("mouseout", function(d) {
                 mouseout_c2p1(d, tooltip);
@@ -388,7 +368,7 @@
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveSeg_c2p1(d, tooltip, position);
+                mousemoveSegSpatial_c2p1(d, tooltip, position);
             })
             .on("mouseout", function(d) {
                 mouseout_c2p1(d, tooltip);
@@ -402,11 +382,10 @@
             //       return "#ccc";
             //     };
             // });
-
-       
+        
         // add drb stations to map
         var drb_stations = map.selectAll(".obs_stations")
-            // bind points to each element to be created
+            // bind segments to each element to be created
             .data(stations)
             // create an element for each datum
             .enter()
@@ -427,7 +406,7 @@
             // })
             // .on("mousemove", function(d) {
             //     position = d3.mouse(this);
-            //     mousemoveSeg_c2p1(d, tooltip, position);
+            //     mousemoveSegSpatial_c2p1(d, tooltip, position);
             // })
             // .on("mouseout", function(d) {
             //     mouseout_c2p1(d, tooltip);
@@ -441,15 +420,10 @@
             //       return "#ccc";
             //     };
             // });
-
-        // add scale bar
-        map.append("g").call(scaleBarTop)
-        map.append("g").call(scaleBarBottom)
-
     };
 
     // *********************************************************************//
-    function mousemoveSeg_c2p1(data, tooltip, position) {
+    function mousemoveSegSpatial_c2p1(data, tooltip, position) {
         var num_obs = data.properties.total_count;
         tooltip
             .html(d3.format(',')(num_obs) + "<p>obs.")
@@ -508,20 +482,8 @@
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
-    function setSegments_c2p2(segments, stations, bay, reservoirs, dams, buffered_basin, map, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale){
-        
-        // add buffered basin to map
-        var drb_buffered_basin = map.append("path")
-            .datum(buffered_basin)
-            .attr("class", "c2p2 buffered_basin")
-            .attr("d", map_path);
-            // .on("mouseover", function(d) {
-            //     mouseover_c2p1(d, tooltip);
-            // })
-            // .on("mouseout", function(d) {
-            //     mouseout_c2p1(d, tooltip);
-            // });
-
+    function setSegments_c2p2(segments, stations, bay, map, map_path, widthScale, colorScale){
+            
         // add delaware bay to map
         var drb_bay = map.append("path")
             .datum(bay)
@@ -576,14 +538,14 @@
             })
             .style("fill", "None")
             .on("mouseover", function(d) {
-                mouseoverSeg_c2p2(d, tooltip);
+                mouseover_c2p2(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveSeg_c2p2(d, tooltip, position);
+                mousemoveSegSpatial_c2p2(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseoutSeg_c2p2(d, tooltip);
+                mouseout_c2p2(d, tooltip);
             });
             // // set color based on colorScale function
             // .style("stroke", function(d){
@@ -594,66 +556,89 @@
             //       return "#ccc";
             //     };
             // });
-
-        // add drb reservoirs to map
-        var drb_reservoirs = d3.selectAll(".reservoirs")
-            // bind polygons to each element to be created
-            .data(reservoirs)
-            // create an element for each datum
-            .enter()
-            // append each element to the svg as a path element
-            .append("path")
-            // project polygons
-            .attr("d", map_path)
-            // assign class for styling
-            .attr("class", function(d){
-                return "reservoirs res_id" + d.GRAND_ID
-            })
-            .style("fill", "#e71212")
-            .style("stroke", "red")
-            .style("stroke-width", 3)
-
+        
         // // add drb stations to map
         // var drb_stations = map.selectAll(".obs_stations")
-        //     // bind points to each element to be created
+        //     // bind segments to each element to be created
         //     .data(stations)
         //     // create an element for each datum
         //     .enter()
         //     // append each element to the svg as a circle element
         //     .append("path")
-        //     // project points and SET SIZE
-        //     .attr("d", map_path.pointRadius(2))
         //     // assign class for styling
         //     .attr("class", function(d){
         //         return "c2p2 obs_stations station" + d.id
         //     })
-        //     .style("fill", "#ffffff")
-        //     .style("stroke", "#000000")
-        //     .style("stroke-width", 0.4)
-        //     .style("opacity", 0.7)
+        //     // project points
+        //     .attr("d", path)
+        //     .attr("radius", 6)
+        //     .style("fill", "Red")
+        //     .style("stroke", "None")
+            // .on("mouseover", function(d) {
+            //     mouseover(d, tooltip);
+            // })
+            // .on("mousemove", function(d) {
+            //     position = d3.mouse(this);
+            //     mousemoveSegSpatial_c2p2(d, tooltip, position);
+            // })
+            // .on("mouseout", function(d) {
+            //     mouseout(d, tooltip);
+            // });
+            // // set color based on colorScale function
+            // .style("stroke", function(d){
+            //     var value = d.properties['total_count'];
+            //     if(value){
+            //       return colorScale(value);
+            //     } else {
+            //       return "#ccc";
+            //     };
+            // });
+    };
 
-        // // add drb dams to map
-        // var drb_dams = d3.selectAll(".dams")
-        //     // bind points to each element to be created
-        //     .data(dams)
-        //     // create an element for each datum
-        //     .enter()
-        //     // append each element to the svg as a circle element
-        //     .append("path")
-        //     // project points and SET SIZE
-        //     .attr("d", map_path.pointRadius(2))
-        //     // assign class for styling
-        //     .attr("class", function(d){
-        //         return "c2p2 dams dam_id" + d.GRAND_ID
-        //     })
-        //     .style("fill", "#ffffff")
-        //     .style("stroke", "#000000")
-        //     .style("stroke-width", 0.4)
-        //     .style("opacity", 0.7)
+    // *********************************************************************//
+    // fuction to create a dropdown menu for attribute selection
+    function createDropdown_c2p2(selectList_c2p2){ 
+        // add select element
+        var dropdown = d3.select("#matrixChart_c2p2")
+            // append the select element to the body
+            .append("select")
+            // add class for styling
+            .attr("class", "dropdown")
+            // add event listener
+            .on("change", function(){
+                // call listener handler function
+                changeInteractionDimension_c2p2(this.value) 
+            });
 
-        // add scale bar
-        map.append("g").call(scaleBarTop)
-        map.append("g").call(scaleBarBottom)
+        // add initial option
+        var titleOption = dropdown.append("option")
+            // create a title option element with no value attribute
+            .attr("class", "titleOption")
+            // ensure that users cannot select it
+            .attr("disabled", "true")
+            // add an affordance to let users know they can interact with the dropdown menu
+            .text("Interaction Dimension: " + expressed_c2p2);
+
+        // add attribute name options
+        var attrOptions = dropdown.selectAll("attrOptions")
+            // bind data to the elements to be created
+            .data(selectList_c2p2)
+            // create an element for each datum
+            .enter()
+            // append to the option
+            .append("option")
+            // set value of attributes
+            .attr("value", function(d){ return d })
+            // set text element
+            .text(function(d){ 
+                return "Interaction Dimension: " +d 
+            });
+    };
+
+    // *********************************************************************//
+    function changeInteractionDimension_c2p2(dimension){ 
+        // reset expressed_c2p2 dimension based on selected dimension
+        expressed_c2p2 = dimension;
     };
 
     // *********************************************************************//
@@ -848,16 +833,16 @@
             // .on("click", function(d){
             //     clickRectSpatial(d, tooltip);
             // })
-            // .on("mouseover", function(d) {
-            //     mouseoverRect_c2p2(d, tooltip);
-            // })
-            // .on("mousemove", function(d) {
-            //     position = d3.mouse(this);
-            //     mousemoveRect_c2p2(d, tooltip, position);
-            // })
-            // .on("mouseout", function(d) {
-            //     mouseoutRect_c2p2(d, tooltip);
-            // })
+            .on("mouseover", function(d) {
+                mouseover_c2p2(d, tooltip);
+            })
+            .on("mousemove", function(d) {
+                position = d3.mouse(this);
+                mousemoveRect_c2p2(d, tooltip, position);
+            })
+            .on("mouseout", function(d) {
+                mouseout_c2p2(d, tooltip);
+            })
 
         // revised build of temporal rectangles
         var TemporalRectangles = transformedMatrix.selectAll('.c2p2.matrixTemporalRect')
@@ -880,178 +865,201 @@
             .style("stroke", "#000000") // #ffffff"
             .style("opacity", 0)
             .on("mouseover", function(d) {
-                mouseoverRect_c2p2(d, tooltip);
+                mouseover_c2p2(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
                 mousemoveRect_c2p2(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseoutRect_c2p2(d, tooltip);
+                mouseout_c2p2(d, tooltip);
             })
-    };
-
-    // *********************************************************************//
-    function mousemoveSeg_c2p2(data, tooltip, position) {
-        var num_obs = data.properties.total_count;
-        tooltip
-            .html(d3.format(',')(num_obs) + "<p>obs.")
-            // .html("Segment " + data.seg_id_nat)
-            .style("left", position[0]+35 + "px")
-            .style("top", position[1]-25 + "px")
-            .style("text-align", "left"); /* position[1]+110 */
-    };
-
-    // *********************************************************************//
-    function mouseoverSeg_c2p2(data, tooltip) {
-
-        d3.selectAll(".c2p2.matrixTemporalRect")
-            .style("fill", "None")
-            .style("stroke", "None")
-
-        tooltip
-            .style("opacity", 1);
-        d3.selectAll(".c2p2.matrixSpatialRect")
-            .style("opacity", 0.7)
-            .style("stroke-width", 1);
-        d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
-            .raise()
-        d3.selectAll(".c2p2.matrixSpatialRect.seg" + data.seg_id_nat)
-            // .style("fill", function(data) {
-            //     if (data.properties.total_count > 0) { //properties.total_count
-            //         return "#363636";     //0              
-            //     } else {
-            //         return "#000000";
-            //     }
-            // })
-            .style("stroke-width", function(data) {
-                if (data.properties.total_count > 0) { //properties.total_count
-                    return 0;     //0.5              
-                } else {
-                    return 0.5;
-                }
-            })
-            .style("opacity", function(data) {
-                if (data.properties.total_count > 0) { //properties.total_count
-                    return 0;       //1            
-                } else {
-                    return 1;
-                }
-            })
-            .style("stroke", function(data) {
-                if (data.properties.total_count > 0) {
-                    return "None";       //"#363636"            
-                } else {
-                    return "#ffffff"; //red
-                }
-            })
-            .raise();
-        // d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
-        //     .raise()
-        d3.selectAll(".c2p2.delaware_bay")
-            .style("fill", "#172c4f")
-        d3.selectAll(".c2p2.river_segments")
-            .style("stroke", "#172c4f")
-        d3.selectAll(".c2p2.river_segments.seg" + data.seg_id_nat)
-            .style("stroke", "#ffffff")
-            .attr("opacity", 1)
-            .attr("filter", "url(#shadow1)")
-            .raise()
-            
-    };
-
-    // *********************************************************************//
-    function mouseoutSeg_c2p2(data, tooltip) {
-
-        d3.selectAll(".c2p2.matrixTemporalRect")
-            .style("fill", "#000000")
-            .style("stroke", "#000000")
-            .style("stroke-width", 2) 
-
-        tooltip
-            .style("opacity", 0)
-        d3.selectAll(".c2p2.matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
-            .style("stroke", "None")    
-            .style("stroke", "#000000") // "#ffffff"
-            .style("fill", "#000000") // "#ffffff"
-            .style("stroke-width", 2)
-            .style("opacity", 0)
-        d3.selectAll(".c2p2.matrixSpatialRect" + data.seg_id_nat)
-            .lower()
-        d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
-            .lower()
-        d3.selectAll(".c2p2.delaware_bay")
-            .style("fill", "#6079a3")
-        d3.selectAll(".c2p2.river_segments")
-            .style("stroke", "#6079a3")
-        d3.selectAll(".c2p2.river_segments.seg" + data.seg_id_nat)
-            .style("stroke", "#6079a3")
-            .attr("opacity", 1)
-            .attr("filter","None")
-            .lower()
-        d3.selectAll("g")
-            .raise()
-
     };
 
     // *********************************************************************//
     function mousemoveRect_c2p2(data, tooltip, position) {
-        var xoffset = position[0]+10
-        var yoffset = position[1]-5
-        tooltip
-            .html(data[timestep_c2p2])
-            .style("left", xoffset + "px")
-            .style("top", yoffset + "px");
+        if (expressed_c2p2 == 'Space') {
+            if (data.properties) {
+                var num_obs = data.properties.total_count;
+                var yoffset = position[1]+10
+                tooltip
+                    .html(d3.format(',')(num_obs) + "<p>obs.")
+                    // .html("Segment " + data.seg_id_nat)
+                    .style("left", 8 + "px")
+                    .style("top", yoffset + "px")
+                    .style("text-align", "right");
+            }
+        } else if (expressed_c2p2 = 'Time') {
+            if (data.total_annual_count) {
+                var xoffset = position[0]+10
+                var yoffset = position[1]-5
+                tooltip
+                    .html(data[timestep_c2p2])
+                    .style("left", xoffset + "px")
+                    .style("top", yoffset + "px");
+            }
+        }
     };
-   
+
     // *********************************************************************//
-    function mouseoverRect_c2p2(data, tooltip) {
+    function mousemoveSegSpatial_c2p2(data, tooltip, position) {
+        if (expressed_c2p2 == 'Space') {
+            var num_obs = data.properties.total_count;
+            tooltip
+                .html(d3.format(',')(num_obs) + "<p>obs.")
+                // .html("Segment " + data.seg_id_nat)
+                .style("left", position[0]+35 + "px")
+                .style("top", position[1]-25 + "px")
+                .style("text-align", "left"); /* position[1]+110 */
+        } //else if (expressed_c2p2 = 'Time') 
+    };
+    
+    // *********************************************************************//
+    function mouseover_c2p2(data, tooltip) {
+        if (expressed_c2p2 == 'Space') {
 
-        d3.selectAll(".c2p2.matrixSpatialRect")
-            .style("fill", "None")
-            .style("stroke", "None")
+            d3.selectAll(".c2p2.matrixTemporalRect")
+                .style("fill", "None")
+                .style("stroke", "None")
 
-        tooltip
-            .style("opacity", 1);
-        d3.selectAll(".c2p2.matrixTemporalRect")
-            .style("opacity", 0.8)
-            .style("stroke-width", 2);
-        d3.selectAll(".c2p2.matrixTemporalRect.time" + data[timestep_c2p2])
-            .style("opacity", 0)
-        d3.selectAll(".c2p2.delaware_bay")
-            .style("fill", "#172c4f")
-        d3.selectAll(".c2p2.river_segments")
-            .style("stroke", "#172c4f")
-        d3.selectAll(".c2p2.river_segments." + timestep_c2p2 + data[timestep_c2p2])
-            .style("stroke", "#ffffff")
-            .attr("opacity", 1)
-            .raise()
+            if (data.properties) {
+                tooltip
+                    .style("opacity", 1);
+                d3.selectAll(".c2p2.matrixSpatialRect")
+                    .style("opacity", 0.7)
+                    .style("stroke-width", 1);
+                d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
+                    .raise()
+                d3.selectAll(".c2p2.matrixSpatialRect.seg" + data.seg_id_nat)
+                    // .style("fill", function(data) {
+                    //     if (data.properties.total_count > 0) { //properties.total_count
+                    //         return "#363636";     //0              
+                    //     } else {
+                    //         return "#000000";
+                    //     }
+                    // })
+                    .style("stroke-width", function(data) {
+                        if (data.properties.total_count > 0) { //properties.total_count
+                            return 0;     //0.5              
+                        } else {
+                            return 0.5;
+                        }
+                    })
+                    .style("opacity", function(data) {
+                        if (data.properties.total_count > 0) { //properties.total_count
+                            return 0;       //1            
+                        } else {
+                            return 1;
+                        }
+                    })
+                    .style("stroke", function(data) {
+                        if (data.properties.total_count > 0) {
+                            return "None";       //"#363636"            
+                        } else {
+                            return "#ffffff"; //red
+                        }
+                    })
+                    .raise();
+                // d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
+                //     .raise()
+                d3.selectAll(".c2p2.delaware_bay")
+                    .style("fill", "#172c4f")
+                d3.selectAll(".c2p2.river_segments")
+                    .style("stroke", "#172c4f")
+                d3.selectAll(".c2p2.river_segments.seg" + data.seg_id_nat)
+                    .style("stroke", "#ffffff")
+                    .attr("opacity", 1)
+                    .attr("filter", "url(#shadow1)")
+                    .raise()
+            } 
+        } else if (expressed_c2p2 = 'Time') {
+
+            d3.selectAll(".c2p2.matrixSpatialRect")
+                .style("fill", "None")
+                .style("stroke", "None")
+
+            if (data.total_annual_count) {
+                tooltip
+                    .style("opacity", 1);
+                d3.selectAll(".c2p2.matrixTemporalRect")
+                    .style("opacity", 0.8)
+                    .style("stroke-width", 2);
+                d3.selectAll(".c2p2.matrixTemporalRect.time" + data[timestep_c2p2])
+                    .style("opacity", 0)
+                d3.selectAll(".c2p2.delaware_bay")
+                    .style("fill", "#172c4f")
+                d3.selectAll(".c2p2.river_segments")
+                    .style("stroke", "#172c4f")
+                d3.selectAll(".c2p2.river_segments." + timestep_c2p2 + data[timestep_c2p2])
+                    .style("stroke", "#ffffff")
+                    .attr("opacity", 1)
+                    .raise()
+            } 
+        }
             
     };
 
     // *********************************************************************//
-    function mouseoutRect_c2p2(data, tooltip) {
-        d3.selectAll(".c2p2.matrixSpatialRect")
-            .style("fill", "#000000") // #ffffff
-            .style("stroke", "#000000")
-            .style("stroke-width", 2)
+    function mouseout_c2p2(data, tooltip) {
+        if (expressed_c2p2 == 'Space') {
 
-        tooltip
-            .style("opacity", 0)
-        d3.selectAll(".c2p2.matrixTemporalRect") 
-            .style("stroke", "#000000") // #ffffff
-            .style("fill", "#000000") // #ffffff
-            .style("stroke-width", 2)
-            .style("opacity", 0)
-        d3.selectAll(".c2p2.delaware_bay")
-            .style("fill", "#6079a3")
-        d3.selectAll(".c2p2.river_segments")
-            .style("stroke", "#6079a3")
-            .attr("opacity", 1)
-        d3.selectAll(".c2p2.river_segments." + timestep_c2p2 + data[timestep_c2p2])
-            .style("stroke", "#6079a3")
-            .attr("opacity", 1)
-            .lower()
+            d3.selectAll(".c2p2.matrixTemporalRect")
+                .style("fill", "#000000")
+                .style("stroke", "#000000")
+                .style("stroke-width", 2) 
+
+            if (data.properties) {
+                tooltip
+                    .style("opacity", 0)
+                d3.selectAll(".c2p2.matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
+                    .style("stroke", "None")    
+                    .style("stroke", "#000000") // "#ffffff"
+                    .style("fill", "#000000") // "#ffffff"
+                    .style("stroke-width", 2)
+                    .style("opacity", 0)
+                d3.selectAll(".c2p2.matrixSpatialRect" + data.seg_id_nat)
+                    .lower()
+                d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
+                    .lower()
+                d3.selectAll(".c2p2.delaware_bay")
+                    .style("fill", "#6079a3")
+                d3.selectAll(".c2p2.river_segments")
+                    .style("stroke", "#6079a3")
+                d3.selectAll(".c2p2.river_segments.seg" + data.seg_id_nat)
+                    .style("stroke", "#6079a3")
+                    .attr("opacity", 1)
+                    .attr("filter","None")
+                    .lower()
+                d3.selectAll("g")
+                    .raise()
+            } 
+
+        } else if (expressed_c2p2 = 'Time') {
+
+            d3.selectAll(".c2p2.matrixSpatialRect")
+                .style("fill", "#000000") // #ffffff
+                .style("stroke", "#000000")
+                .style("stroke-width", 2)
+
+            if (data.total_annual_count)  {
+                tooltip
+                    .style("opacity", 0)
+                d3.selectAll(".c2p2.matrixTemporalRect") 
+                    .style("stroke", "#000000") // #ffffff
+                    .style("fill", "#000000") // #ffffff
+                    .style("stroke-width", 2)
+                    .style("opacity", 0)
+                d3.selectAll(".c2p2.delaware_bay")
+                    .style("fill", "#6079a3")
+                d3.selectAll(".c2p2.river_segments")
+                    .style("stroke", "#6079a3")
+                    .attr("opacity", 1)
+                d3.selectAll(".c2p2.river_segments." + timestep_c2p2 + data[timestep_c2p2])
+                    .style("stroke", "#6079a3")
+                    .attr("opacity", 1)
+                    .lower()
+            } 
+        }
 
     };
 
@@ -1060,7 +1068,7 @@
     // *********************************************************************//
     // *********************************************************************//
 
-    function setSegments_c2p3(segments, stations, bay, map, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale){
+    function setSegments_c2p3(segments, stations, bay, map, map_path, widthScale, colorScale){
             
         // add delaware bay to map
         var drb_bay = map.append("path")
@@ -1116,20 +1124,90 @@
             })
             .style("fill", "None")
             .on("mouseover", function(d) {
-                mouseoverSeg_c2p3(d, tooltip);
+                mouseover_c2p3(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveSeg_c2p3(d, tooltip, position);
+                mousemoveSegSpatial_c2p3(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseoutSeg_c2p3(d, tooltip);
+                mouseout_c2p3(d, tooltip);
             });
-        
-        // add scale bar
-        map.append("g").call(scaleBarTop)
-        map.append("g").call(scaleBarBottom)
 
+        
+        // // add drb stations to map
+        // var drb_stations = map.selectAll(".obs_stations")
+        //     // bind segments to each element to be created
+        //     .data(stations)
+        //     // create an element for each datum
+        //     .enter()
+        //     // append each element to the svg as a circle element
+        //     .append("path")
+        //     // assign class for styling
+        //     .attr("class", function(d){
+        //         return "c2p3 obs_stations station" + d.id
+        //     })
+        //     // project points
+        //     .attr("d", path)
+        //     .attr("radius", 6)
+        //     .style("fill", "Red")
+        //     .style("stroke", "None")
+            // .on("mouseover", function(d) {
+            //     mouseover_c2p3(d, tooltip);
+            // })
+            // .on("mousemove", function(d) {
+            //     position = d3.mouse(this);
+            //     mousemoveSegSpatial_c2p3(d, tooltip, position);
+            // })
+            // .on("mouseout", function(d) {
+            //     mouseout_c2p3(d, tooltip);
+            // });
+    };
+
+    // *********************************************************************//
+    // fuction to create a dropdown menu for attribute selection
+    function createDropdown_c2p3(selectList_c2p3, csv_matrix_daily_2019, csv_daily_count_2019, segments){
+        // add select element
+        var dropdown = d3.select("#matrixChart_c2p3")
+            // append the select element to the body
+            .append("select")
+            // add class for styling
+            .attr("class", "dropdown")
+            // add event listener
+            .on("change", function(){
+                // call listener handler function
+                changeInteractionDimension_c2p3(this.value, csv_matrix_daily_2019, csv_daily_count_2019, segments)
+            });
+
+        // add initial option
+        var titleOption = dropdown.append("option")
+            // create a title option element with no value attribute
+            .attr("class", "titleOption")
+            // ensure that users cannot select it
+            .attr("disabled", "true")
+            // add an affordance to let users know they can interact with the dropdown menu
+            .text("Interaction Dimension: " + expressed_c2p3);
+
+        // add attribute name options
+        var attrOptions = dropdown.selectAll("attrOptions")
+            // bind data to the elements to be created
+            .data(selectList_c2p3)
+            // create an element for each datum
+            .enter()
+            // append to the option
+            .append("option")
+            // set value of attributes
+            .attr("value", function(d){ return d })
+            // set text element
+            .text(function(d){ 
+                return "Interaction Dimension: " +d 
+            });
+    };
+
+    // *********************************************************************//
+    function changeInteractionDimension_c2p3(dimension, csv_matrix_daily_2019, csv_daily_count_2019, segments){
+        // reset expressed_c2p3 dimension based on selected dimension
+        expressed_c2p3 = dimension;
     };
 
     // *********************************************************************//
@@ -1329,16 +1407,19 @@
                     return 0; 
                 }
             })
-            // .on("mouseover", function(d) {
-            //     mouseover_c2p3(d, tooltip);
+            // .on("click", function(d){
+            //     clickRectSpatial(d, tooltip);
             // })
-            // .on("mousemove", function(d) {
-            //     position = d3.mouse(this);
-            //     mousemoveRect_c2p3(d, tooltip, position);
-            // })
-            // .on("mouseout", function(d) {
-            //     mouseout_c2p3(d, tooltip);
-            // })
+            .on("mouseover", function(d) {
+                mouseover_c2p3(d, tooltip);
+            })
+            .on("mousemove", function(d) {
+                position = d3.mouse(this);
+                mousemoveRect_c2p3(d, tooltip, position);
+            })
+            .on("mouseout", function(d) {
+                mouseout_c2p3(d, tooltip);
+            })
 
         // revised build of temporal rectangles
         var TemporalRectangles = transformedMatrix.selectAll('.c2p3.matrixTemporalRect')
@@ -1361,197 +1442,207 @@
             .style("stroke", "#000000") // #ffffff"
             .style("opacity", 0)
             .on("mouseover", function(d) {
-                mouseoverRect_c2p3(d, tooltip);
+                mouseover_c2p3(d, tooltip);
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
                 mousemoveRect_c2p3(d, tooltip, position);
             })
             .on("mouseout", function(d) {
-                mouseoutRect_c2p3(d, tooltip);
+                mouseout_c2p3(d, tooltip);
             })
-    };
-
-    // *********************************************************************//
-    function mousemoveSeg_c2p3(data, tooltip, position) {
-
-        var num_obs = data.properties.year_count['2019'];
-        tooltip
-            .html(d3.format(',')(num_obs) + "<p>obs.")
-            // .html("Segment " + data.seg_id_nat)
-            .style("left", position[0]+35 + "px")
-            .style("top", position[1]-25 + "px")
-            .style("text-align", "left"); /* position[1]+110 */
-
-    };
-
-    // *********************************************************************//
-    function mouseoverSeg_c2p3(data, tooltip) {
-
-        d3.selectAll(".c2p3.matrixTemporalRect")
-            .style("fill", "None")
-            .style("stroke", "None")
-
-        tooltip
-            .style("opacity", 1);
-        d3.selectAll(".c2p3.matrixSpatialRect")
-            .style("opacity", 0.7)
-            .style("stroke-width", 1);
-        d3.selectAll(".c2p3.cell.segment" + data.seg_id_nat)
-            .raise()
-        d3.selectAll(".c2p3.matrixSpatialRect.seg" + data.seg_id_nat)
-            // .style("fill", function(data) {
-            //     if (data.properties.total_count > 0) { //properties.total_count
-            //         return "#363636";     //0              
-            //     } else {
-            //         return "#000000";
-            //     }
-            // })
-            .style("stroke-width", function(data) {
-                if (data.properties.total_count > 0) { //properties.total_count
-                    return 0;     //0.5              
-                } else {
-                    return 0.5;
-                }
-            })
-            .style("opacity", function(data) {
-                if (data.properties.total_count > 0) { //properties.total_count
-                    return 0;       //1            
-                } else {
-                    return 1;
-                }
-            })
-            .style("stroke", function(data) {
-                if (data.properties.total_count > 0) {
-                    return "None";       //"#363636"            
-                } else {
-                    return "#ffffff"; //red
-                }
-            })
-            .raise();
-        // d3.selectAll(".c2p3.cell.segment" + data.seg_id_nat)
-        //     .raise()
-        d3.selectAll(".c2p3.delaware_bay")
-            .style("fill", "#172c4f")
-        d3.selectAll(".c2p3.river_segments")
-            .style("stroke", "#172c4f")
-        d3.selectAll(".c2p3.river_segments.seg" + data.seg_id_nat)
-            .style("stroke", "#ffffff")
-            .attr("opacity", 1)
-            .attr("filter", "url(#shadow1)")
-            .raise()
-            
-    };
-
-    // *********************************************************************//
-    function mouseoutSeg_c2p3(data, tooltip) {
-
-        d3.selectAll(".c2p3.matrixTemporalRect")
-            .style("fill", "#000000")
-            .style("stroke", "#000000")
-            .style("stroke-width", 2) 
-
-        tooltip
-            .style("opacity", 0)
-        d3.selectAll(".c2p3.matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
-            .style("stroke", "None")    
-            .style("stroke", "#000000") // "#ffffff"
-            .style("fill", "#000000") // "#ffffff"
-            .style("stroke-width", 2)
-            .style("opacity", 0)
-        d3.selectAll(".c2p3.matrixSpatialRect" + data.seg_id_nat)
-            .lower()
-        d3.selectAll(".c2p3.cell.segment" + data.seg_id_nat)
-            .lower()
-        d3.selectAll(".c2p3.delaware_bay")
-            .style("fill", "#6079a3")
-        d3.selectAll(".c2p3.river_segments")
-            .style("stroke", "#6079a3")
-        d3.selectAll(".c2p3.river_segments.seg" + data.seg_id_nat)
-            .style("stroke", "#6079a3")
-            .attr("opacity", 1)
-            .attr("filter","None")
-            .lower()
-        d3.selectAll("g")
-            .raise()
-
     };
 
     // *********************************************************************//
     function mousemoveRect_c2p3(data, tooltip, position) {
-
-        var xoffset = position[0]-15
-        var yoffset = position[1]-5
-        tooltip
-            .html(data[timestep_c2p3])
-            .style("left", xoffset + "px")
-            .style("top", yoffset + "px");
-
+        if (expressed_c2p3 == 'Space') {
+            if (data.properties) {
+                var num_obs = data.properties.year_count['2019'];
+                var yoffset = position[1]+10
+                tooltip
+                    .html(d3.format(',')(num_obs) + "<p>obs.")
+                    // .html("Segment " + data.seg_id_nat)
+                    .style("left", 8 + "px")
+                    .style("top", yoffset + "px")
+                    .style("text-align", "right");
+            }
+        } else if (expressed_c2p3 = 'Time') {
+            if (data.total_daily_count) {
+                var xoffset = position[0]-15
+                var yoffset = position[1]-5
+                tooltip
+                    .html(data[timestep_c2p3])
+                    .style("left", xoffset + "px")
+                    .style("top", yoffset + "px");
+            }
+        }
     };
-   
+
     // *********************************************************************//
-    function mouseoverRect_c2p3(data, tooltip) {
+    function mousemoveSegSpatial_c2p3(data, tooltip, position) {
+        if (expressed_c2p3 == 'Space') {
+            var num_obs = data.properties.year_count['2019'];
+            tooltip
+                .html(d3.format(',')(num_obs) + "<p>obs.")
+                // .html("Segment " + data.seg_id_nat)
+                .style("left", position[0]+35 + "px")
+                .style("top", position[1]-25 + "px")
+                .style("text-align", "left"); /* position[1]+110 */
+        } //else if (expressed_c2p3 = 'Time') 
+    };
+    
+    // *********************************************************************//
+    function mouseover_c2p3(data, tooltip) {
+        if (expressed_c2p3 == 'Space') {
 
-        d3.selectAll(".c2p3.matrixSpatialRect")
-            .style("fill", "None")
-            .style("stroke", "None")
+            d3.selectAll(".c2p3.matrixTemporalRect")
+                .style("fill", "None")
+                .style("stroke", "None")
 
-        tooltip
-            .style("opacity", 1)
-        d3.selectAll(".c2p3.matrixTemporalRect")
-            .style("opacity", 0.8)
-            // .style("stroke", "rgba(0, 0, 0, 0)")
-            .style("stroke-width", 0.6)
-        // d3.selectAll(".c2p3.cell.timestep" + data[timestep_c2p3])
-        //     .raise()
-        d3.selectAll(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
-            .style("opacity", 0)
-            // .raise()
-        d3.selectAll(".c2p3.delaware_bay")
-            .style("fill", "#172c4f")
-        d3.selectAll(".c2p3.river_segments")
-            .style("stroke", "#172c4f")
-        d3.selectAll(".c2p3.river_segments." + timestep_c2p3 + data[timestep_c2p3])
-            .style("stroke", "#ffffff")
-            .attr("opacity", 1)
-            .raise()
+            if (data.properties) {
+                tooltip
+                    .style("opacity", 1);
+                d3.selectAll(".c2p3.matrixSpatialRect")
+                    .style("opacity", 0.8)
+                    .style("stroke-width", 1);
+                d3.selectAll(".c2p3.cell.segment" + data.seg_id_nat)
+                    .raise()
+                d3.selectAll(".c2p3.matrixSpatialRect.seg" + data.seg_id_nat)
+                    .style("stroke-width", function(data) {
+                        if (data.properties.year_count['2019'] > 0) { //properties.total_count
+                            return 0;                   
+                        } else {
+                            return 0.5;
+                        }
+                    })
+                    .style("opacity", function(data) {
+                        if (data.properties.year_count['2019'] > 0) { //properties.total_count
+                            return 0;                   
+                        } else {
+                            return 1;
+                        }
+                    })
+                    .style("stroke", function(data) {
+                        if (data.properties.year_count['2019'] > 0) {
+                            return "None";                   
+                        } else {
+                            return "#ffffff"; //red
+                        }
+                    })
+                    .raise();
+                d3.selectAll(".c2p3.delaware_bay")
+                    .style("fill", "#172c4f")
+                d3.selectAll(".c2p3.river_segments")
+                    .style("stroke", "#172c4f")
+                d3.selectAll(".c2p3.river_segments.seg" + data.seg_id_nat)
+                    .style("stroke", "#ffffff")
+                    .attr("opacity", 1)
+                    .attr("filter", "url(#shadow1)")
+                    .raise()
+            } 
+        } else if (expressed_c2p3 = 'Time') {
+            console.log(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
+
+            d3.selectAll(".c2p3.matrixSpatialRect")
+                .style("fill", "None")
+                .style("stroke", "None")
+
+            if (data.total_daily_count) {
+                tooltip
+                    .style("opacity", 1)
+                d3.selectAll(".c2p3.matrixTemporalRect")
+                    .style("opacity", 0.8)
+                    // .style("stroke", "rgba(0, 0, 0, 0)")
+                    .style("stroke-width", 0.6)
+                // d3.selectAll(".c2p3.cell.timestep" + data[timestep_c2p3])
+                //     .raise()
+                d3.selectAll(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
+                    .style("opacity", 0)
+                    // .raise()
+                d3.selectAll(".c2p3.delaware_bay")
+                    .style("fill", "#172c4f")
+                d3.selectAll(".c2p3.river_segments")
+                    .style("stroke", "#172c4f")
+                d3.selectAll(".c2p3.river_segments." + timestep_c2p3 + data[timestep_c2p3])
+                    .style("stroke", "#ffffff")
+                    .attr("opacity", 1)
+                    .raise()
+            } 
+        }
             
     };
 
     // *********************************************************************//
-    function mouseoutRect_c2p3(data, tooltip) {
+    function mouseout_c2p3(data, tooltip) {
+        if (expressed_c2p3 == 'Space') {
 
-        d3.selectAll(".c2p3.matrixSpatialRect")
-            .style("fill", "#000000") // #ffffff
-            .style("stroke", "#000000")
-            .style("stroke-width", 2)
+            d3.selectAll(".c2p3.matrixTemporalRect")
+                .style("fill", "#000000")
+                .style("stroke", "#000000")
+                .style("stroke-width", 0.6) 
 
-        tooltip
-            .style("opacity", 0)
-        d3.selectAll(".c2p3.matrixTemporalRect") 
-            .style("stroke", "#000000") // #ffffff
-            .style("fill", "#000000") // #ffffff
-            .style("stroke-width", 0.6)
-            .style("stroke-opacity", 0)
-            .style("opacity", 0)
-        // d3.selectAll(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
-            // .style("stroke", "#000000") // #ffffff
-            // .style("fill", "#000000") // #ffffff
-            // .style("stroke-width", 0.6)
-            // .style("stroke-opacity", 0)
-            // .style("opacity", 0)    
-            // .lower()
-        // d3.selectAll(".c2p3.cell.timestep" + data[timestep_c2p3])
-        //     .raise()
-        d3.selectAll(".c2p3.delaware_bay")
-            .style("fill", "#6079a3")
-        d3.selectAll(".c2p3.river_segments")
-            .style("stroke", "#6079a3")
-            .attr("opacity", 1)
-        d3.selectAll(".c2p3.river_segments." + timestep_c2p3 + data[timestep_c2p3])
-            .style("stroke", "#6079a3")
-            .attr("opacity", 1)
-            .lower()
+            if (data.properties) {
+                tooltip
+                    .style("opacity", 0)
+                d3.selectAll(".c2p3.matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
+                    .style("stroke", "None")    
+                    .style("stroke", "#000000") // "#ffffff"
+                    .style("fill", "#000000") // "#ffffff"
+                    .style("stroke-width", 2)
+                    .style("opacity", 0)
+                d3.selectAll(".c2p3.matrixSpatialRect" + data.seg_id_nat)
+                    .lower()
+                d3.selectAll(".c2p3.cell.segment" + data.seg_id_nat)
+                    .lower()
+                d3.selectAll(".c2p3.delaware_bay")
+                    .style("fill", "#6079a3")
+                d3.selectAll(".c2p3.river_segments")
+                    .style("stroke", "#6079a3")
+                d3.selectAll(".c2p3.river_segments.seg" + data.seg_id_nat)
+                    .style("stroke", "#6079a3")
+                    .attr("opacity", 1)
+                    .attr("filter","None")
+                    .lower()
+                d3.selectAll("g")
+                    .raise()
+            } 
+
+        } else if (expressed_c2p3 = 'Time') {
+
+            d3.selectAll(".c2p3.matrixSpatialRect")
+                .style("fill", "#000000") // #ffffff
+                .style("stroke", "#000000")
+                .style("stroke-width", 2)
+
+            if (data.total_daily_count)  {
+                tooltip
+                    .style("opacity", 0)
+                d3.selectAll(".c2p3.matrixTemporalRect") 
+                    .style("stroke", "#000000") // #ffffff
+                    .style("fill", "#000000") // #ffffff
+                    .style("stroke-width", 0.6)
+                    .style("stroke-opacity", 0)
+                    .style("opacity", 0)
+                // d3.selectAll(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
+                    // .style("stroke", "#000000") // #ffffff
+                    // .style("fill", "#000000") // #ffffff
+                    // .style("stroke-width", 0.6)
+                    // .style("stroke-opacity", 0)
+                    // .style("opacity", 0)    
+                    // .lower()
+                // d3.selectAll(".c2p3.cell.timestep" + data[timestep_c2p3])
+                //     .raise()
+                d3.selectAll(".c2p3.delaware_bay")
+                    .style("fill", "#6079a3")
+                d3.selectAll(".c2p3.river_segments")
+                    .style("stroke", "#6079a3")
+                    .attr("opacity", 1)
+                d3.selectAll(".c2p3.river_segments." + timestep_c2p3 + data[timestep_c2p3])
+                    .style("stroke", "#6079a3")
+                    .attr("opacity", 1)
+                    .lower()
+            } 
+        }
 
     };
 
