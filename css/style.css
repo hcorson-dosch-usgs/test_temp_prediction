@@ -41,7 +41,8 @@ body {
 }
 
 .reservoirs {
-  fill:  #e71212; 
+  fill:  #6079a3;
+  stroke: #6079a3; 
 }
 
 .c2p2.matrix {
@@ -58,6 +59,14 @@ body {
 
 .matrixAxis {
   color: #7a7a7a;
+}
+
+.chartAxis {
+  color: #7a7a7a;
+}
+
+.chartAxisText {
+  fill: #7a7a7a;
 }
 
 .dropdown {

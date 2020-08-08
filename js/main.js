@@ -13,9 +13,9 @@
     var timestep_c2p3 = 'date'
 
     // margins, width and height for bar charts
-    var chart_margin = {top: 20, right: 15, bottom: 15, left: 35},
-        chart_width = 700 - chart_margin.left - chart_margin.right, //500
-        chart_height = window.innerHeight*0.2 - chart_margin.top - chart_margin.bottom;
+    var chart_margin = {top: 10, right: 10, bottom: 25, left: 45},
+        chart_width = 500 - chart_margin.left - chart_margin.right, //500
+        chart_height = window.innerHeight*0.3 - chart_margin.top - chart_margin.bottom;
 
 
     // margins, width and height for matrix charts
@@ -89,19 +89,32 @@
             .attr("class", "map_c2p3")
             .attr("width", map_width)
             .attr("height", map_height);
+
+        // write function to process data for stacked bar chart
+        function type(d, i, columns) {
+            for (i=1, t=0; i < columns.length; ++i) 
+                // for each row, which is d, cycle through the columns
+                t += d[columns[i]] = +d[columns[i]];
+                // create a new column in the data titled "total"
+                d.total = t;
+                return d;
+            
+        }
         
-        // parallelize asynchronous data loading 
+        // parallelize asynchronous data loading // observed_reach_station_coords.json
         var promises = [d3.csv("data/segment_maflow.csv"),
                         d3.csv("data/matrix_annual_obs.csv"), 
                         d3.csv("data/obs_annual_count.csv"),
                         d3.csv("data/matrix_daily_2019_obs.csv"),
                         d3.csv("data/obs_daily_count_2019.csv"),
+                        d3.csv("data/agency_annual_count.csv", type),
                         d3.json("data/segment_geojson.json"),
-                        d3.json("data/observed_reach_station_coords.json"),
+                        d3.json("data/observed_site_locations.json"), 
                         d3.json("data/NHDWaterbody_DelawareBay_pt6per_smooth.json"),
                         d3.json("data/reservoirs.json"),
                         d3.json("data/dams.json"),
-                        d3.json("data/DRB_Wshed_1per_smooth.json")
+                        d3.json("data/Segments_subset_4per_smooth_10miBuffer_diss.json"),
+                        d3.json("data/Segments_subset_4per_smooth_pt5miBuffer_symdiff.json")
                     ];
         Promise.all(promises).then(callback);
 
@@ -113,12 +126,14 @@
             csv_annual_count = data[2];
             csv_matrix_daily_2019 = data[3];
             csv_daily_count_2019 = data[4];
-            json_segments = data[5];
-            json_obs_stations = data[6];
-            json_bay = data[7];
-            json_reservoirs = data[8];
-            json_dams = data[9];
-            json_watershed = data[10];
+            csv_agency_count = data[5];
+            json_segments = data[6];
+            json_obs_stations = data[7];
+            json_bay = data[8];
+            json_reservoirs = data[9];
+            json_dams = data[10];
+            json_basin_buffered = data[11];
+            json_segs_buffered = data[12];
 
             // translate topojsons
             var segments = json_segments.features; /* topojson.feature(json_segments, json_segments.objects.Segments_subset_4per_smooth).features */
@@ -126,9 +141,10 @@
             var bay = topojson.feature(json_bay, json_bay.objects.NHDWaterbody_DelawareBay_pt6per_smooth);
             var reservoirs = json_reservoirs.features;
             var dams = json_dams.features;
-            var watershed = topojson.feature(json_watershed, json_watershed.objects.DRB_Wshed_1per_smooth);
+            var basin_buffered = topojson.feature(json_basin_buffered, json_basin_buffered.objects.Segments_subset_4per_smooth_10miBuffer_diss);
+            var segs_buffered = topojson.feature(json_segs_buffered, json_segs_buffered.objects.Segments_subset_4per_smooth_pt5miBuffer_symdiff);
 
-            // console.log(stations)
+            console.log(reservoirs)
 
             // join csv data to geojson segments
             segments = joinData(segments, csv_flow);
@@ -140,25 +156,29 @@
             // stroke width scale
             var widthScale = makeWidthScale(csv_flow);
 
-            // stroke color scale
-            var colorScale = makeColorScale(segments);
+            // segment stroke color scale
+            var segmentColorScale = makeSegmentColorScale(segments);
+
+            // station observation count color scale
+            // var stationColorScale = makeStationColorScale(stations);
+
 
             // // Set up panel 1 -
             // add DRB segments to the panel 1 map
-            setSegments_c2p1(segments, stations, bay, map_c2p1, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale);
+            setSegments_c2p1(segments, stations, bay, map_c2p1, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
             // add bar chart to panel 1
-            setBarChart_c2p1(stations);
+            setBarChart_c2p1(csv_agency_count);
 
             // // Set up panel 2 - 
             // add DRB segments to the panel 2 map
-            setSegments_c2p2(segments, stations, bay, reservoirs, dams, watershed, map_c2p2, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale);
+            setSegments_c2p2(segments, stations, bay, reservoirs, dams, basin_buffered, map_c2p2, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
             // create panel 2 matrix
             createMatrix_c2p2(csv_matrix_annual, csv_annual_count, segments, timestep_c2p2);
 
 
             // // Set up panel 3 - 
             // // add DRB segments to the panel 3 map
-            setSegments_c2p3(segments, stations, bay, map_c2p3, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale);
+            setSegments_c2p3(segments, stations, bay, reservoirs, dams, basin_buffered, map_c2p3, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
             // // create panel 3 matrix
             createMatrix_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments, timestep_c2p3);
 
@@ -263,7 +283,7 @@
     };
 
     // *********************************************************************//
-    function makeColorScale(segments){
+    function makeSegmentColorScale(segments){
         // // graduated scale
         // // set color classes
         // var colorClasses = [
@@ -325,19 +345,8 @@
         return colorScale;
     };
 
-    // add chart
-    function setBarChart_c2p1(stations){
-        // append the svg object ot the body of the page
-        var svgChart = d3.select("#barChart_c2p1")
-        .append("svg")
-            .attr("width", chart_width + chart_margin.left + chart_margin.right)
-            .attr("height", chart_height + chart_margin.top + chart_margin.bottom)
-            .attr("class", "c2p1 barChart")
-        // .append("g")
-        //     .attr("class", "c2p1 transformedBarChart")
-        //     .attr("transform",
-        //         "translate(" + chart_margin.left + "," + chart_margin.top + ")");
-
+    // *********************************************************************//
+    function makeStationColorScale(stations){
         // find max value of data array
         // build array of all counts
         var domainArrayY = [];
@@ -348,73 +357,38 @@
     
         console.log(domainArrayY)
 
-        // comput max value of array
+        // compute max value of array
         dataMax = Math.round(Math.max(...domainArrayY));
-        console.log(dataMax);
+        // console.log(dataMax);
 
+        // create a color scale
+        // color scale
+        var myColor = d3.scaleSequential()
+            .interpolator(d3.interpolatePlasma) /* interpolatePlasma */
+            // .domain([temporalCountMax,1]) // if INVERTING color scale
+            .domain([0, dataMax]) // if NOT INVERTING color scale
 
-        // create a scale to size bars proportionaly to frame
-        var yScale = d3.scaleLinear()
-            // set range of possible output values
-            .range([chart_height, 0])
-            // define range of input values
-            .domain([0, dataMax]);
-
-        // define yAxis generator
-        var yAxis = d3.axisLeft()
-            .scale(yScale)
-
-        // set bars for each station
-        var bars = svgChart.selectAll(".bar")
-            .data(stations)
-            .enter()
-            .append("rect")
-            .sort(function (a,b){
-                return b['properties']['total_count']-a['properties']['total_count'];
-            })
-            .attr("class", function(d){
-                return "bar " + d.properties.site_id
-            })
-            .attr("width", chart_width/stations.length -1)
-            .attr("x", function(d, i){
-                return i * (chart_width/stations.length) + chart_margin.left;
-            })
-            .attr("height", function(d,i){
-                return chart_height - yScale(parseFloat(d['properties']['total_count']))
-            })
-            .attr("y", function(d, i){
-                return yScale(parseFloat(d['properties']['total_count']))
-            })
-            .style("fill", "yellow")
-
-        // place axis
-        svgChart.append("g")
-            .attr("class", "c2p2 chartAxis left")
-            .call(yAxis);
-
-        
-
+        return(myColor)
 
     };
 
-
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
-    function setSegments_c2p1(segments, stations, bay, map, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale){
+    function setSegments_c2p1(segments, stations, bay, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
                   
         // add delaware bay to map
         var drb_bay = map.append("path")
             .datum(bay)
             .attr("class", "c2p1 delaware_bay")
             .attr("d", map_path)
-            .on("mouseover", function(d) {
-                mouseover_c2p1(d);
-            })
-            .on("mouseout", function(d) {
-                mouseout_c2p1(d);
-            });
+            // .on("mouseover", function(d) {
+            //     mouseover_c2p1(d);
+            // })
+            // .on("mouseout", function(d) {
+            //     mouseout_c2p1(d);
+            // });
 
         // // set tooltip
         // var tooltip = d3.select("#DRB_map_c2p1")
@@ -463,27 +437,14 @@
                 }
             })
             .style("fill", "None")
-            .on("mouseover", function(d) {
-                mouseover_c2p1(d);
-            })
-            // .on("mousemove", function(d) {
-            //     position = d3.mouse(this);
-            //     mousemoveSeg_c2p1(d);
+            // .on("mouseover", function(d) {
+            //     mouseover_c2p1(d);
             // })
-            .on("mouseout", function(d) {
-                mouseout_c2p1(d);
-            });
-            // // set color based on colorScale function
-            // .style("stroke", function(d){
-            //     var value = d.properties['total_count'];
-            //     if(value){
-            //       return colorScale(value);
-            //     } else {
-            //       return "#ccc";
-            //     };
+            // .on("mouseout", function(d) {
+            //     mouseout_c2p1(d);
             // });
 
-       
+      
         // add drb stations to map
         var drb_stations = map.selectAll(".obs_stations")
             // bind points to each element to be created
@@ -499,7 +460,15 @@
                 return "c2p2 obs_stations station" + d.id
             })
             .style("fill", "#ffffff")
+            .style("fill", function(d){
+                if (d.properties.site_agency == 'USGS'){
+                    return "#fcb603"
+                } else {
+                    return "#bc5eff"
+                }
+            })
             .style("stroke", "#000000")
+            // .style("stroke", "#ffffff")
             .style("stroke-width", 0.4)
             .style("opacity", 0.7)
             // .on("mouseover", function(d) {
@@ -512,19 +481,201 @@
             // .on("mouseout", function(d) {
             //     mouseout_c2p1(d, tooltip);
             // });
-            // // set color based on colorScale function
-            // .style("stroke", function(d){
-            //     var value = d.properties['total_count'];
-            //     if(value){
-            //       return colorScale(value);
-            //     } else {
-            //       return "#ccc";
-            //     };
-            // });
 
         // add scale bar
         map.append("g").call(scaleBarTop)
         map.append("g").call(scaleBarBottom)
+
+    };
+
+    // *********************************************************************//
+    // add chart
+    function setBarChart_c2p1(csv_agency_count){
+
+        // function type(d, i, columns) {
+        //     for (i=1, t=0; i < columns.length; ++i) 
+        //         // for each row, which is d, cycle through the columns
+        //         t += d[columns[i]] = +d[columns[i]];
+        //         // create a new column in the data titled "total"
+        //         d.total = t;
+        //         return d;
+            
+        // }
+
+
+
+        var svgChart = d3.select("#barChart_c2p1")
+            .append("svg")
+                .attr("width", chart_width + chart_margin.left + chart_margin.right)
+                .attr("height", chart_height + chart_margin.top + chart_margin.bottom)
+                .attr("class", "c2p1 barChart")
+            g = svgChart.append("g")
+                .attr("class", "c2p1 transformedBarChart")
+                .attr("transform", "translate(" + chart_margin.left + "," + chart_margin.top + ")");             
+
+        // define x
+        var x = d3.scaleBand()
+            .rangeRound([0, chart_width])
+            // set padding between bars   
+            .padding(0.3)
+            
+        
+        // make y scale
+        var y = d3.scaleLinear()
+            .range([chart_height, 0]);
+
+        // set colors
+        var z = d3.scaleOrdinal()
+            .range(["#fcb603", "#bc5eff"]);
+        
+        // stack to create an array for each of the series in tehdata
+        var stack = d3.stack();
+
+        // load data
+        data = csv_agency_count
+
+        // set x domain - create an array of the two site agency categories
+        x.domain(data.map(function(d) { return d.year; }));
+
+        // set y domain
+        y.domain([0, d3.max(data, function(d) { return d.total })]).nice();
+
+        // remove the year column from the data
+        z.domain(data.columns.slice(1));
+
+        // set up the series
+        g.selectAll(".series")
+            // keys for the stack are all but the first column
+            .data(stack.keys(data.columns.slice(1))(data))
+            // each agency series is given it's own g
+            .enter().append("g")
+                .attr("class", "series")
+                // keys passed to the z domain to be assigned a color
+                .attr("fill", function(d) { return z(d.key); })
+            .selectAll("rect")
+                .data(function(d) { return d;})
+                .enter().append("rect")
+                    .attr("x", function(d) { return x(d.data.year); })
+                    // from the slice method d is a pair of coordinates, the upper and lower
+                    // bounds of the area to be displayed. This sets the upper y value
+                    .attr("y", function(d) { return y(d[1]); })
+                    // this calculates the height down from the starting point
+                    .attr("height", function(d) { return y(d[0]) - y(d[1]); })
+                    // calculate width for each band
+                    .attr("width", x.bandwidth())
+        
+        // place the x axis
+        g.append("g")
+            .attr("class", "c2p1 chartAxis bottom")
+            .attr("transform", "translate(0," + chart_height + ")")
+            .call(d3.axisBottom(x).tickValues(['1980', '1985', '1990', '1995', '2000', '2005', '2010', '2015', '2019' ]));
+        
+        // place the y axis
+        g.append("g")
+            .attr("class", "c2p1 chartAxis left")
+            .call(d3.axisLeft(y).ticks(10, "s"))
+            .append("text")
+                .attr("y", -35)
+                .attr("x", -80)
+                .attr("text-anchor", "starts")
+                .attr("class", "c2p1 chartAxisText")
+                .attr("fill", "#ffffff")
+                .text("# of Observations")
+                .attr("transform", "rotate(-90)")
+
+        //  make the legend
+        var legend = g.selectAll(".legend")
+            .data(data.columns.slice(1).reverse())
+            .enter().append("g")
+                .attr("class", "legend")
+                .attr("transform", function(d, i) { 
+                    return "translate(" + 0 + "," + i * 20 + ")"; 
+                })
+                .style("font", "10px sans-serif")
+        
+        legend.append("rect")
+            .attr("x", chart_width + 18)
+            .attr("width", 18)
+            .attr("height", 18)
+            .attr("fill", z);
+
+        legend.append("text")
+            .attr("x", chart_width + 44)
+            .attr("y", 9)
+            .attr("dy", ".35em")
+            .attr("text-anchor", "start")
+            .text(function(d) { return d; });
+
+
+
+        // // append the svg object ot the body of the page
+        // var svgChart = d3.select("#barChart_c2p1")
+        // .append("svg")
+        //     .attr("width", chart_width + chart_margin.left + chart_margin.right)
+        //     .attr("height", chart_height + chart_margin.top + chart_margin.bottom)
+        //     .attr("class", "c2p1 barChart")
+        // .append("g")
+        //     .attr("class", "c2p1 transformedBarChart")
+        //     .attr("transform",
+        //         "translate(" + chart_margin.left + "," + chart_margin.top + ")");
+
+        // // find max value of data array
+        // // build array of all counts
+        // var domainArrayY = [];
+        //     for (var i=0; i<stations.length; i++){
+        //         var val = parseFloat(stations[i]['properties']['total_count']);
+        //         domainArrayY.push(val);
+        //     };
+    
+        // console.log(domainArrayY)
+
+        // // compute max value of array
+        // dataMax = Math.round(Math.max(...domainArrayY));
+        // console.log(dataMax);
+
+        // // create a scale to size bars proportionaly to frame
+        // var yScale = d3.scaleLinear()
+        //     // set range of possible output values
+        //     .range([chart_height, 0])
+        //     // define range of input values
+        //     .domain([0, dataMax]);
+
+        // // define yAxis generator
+        // var yAxis = d3.axisLeft()
+        //     .scale(yScale)
+
+        // // set bars for each station
+        // var bars = svgChart.selectAll(".bar")
+        //     .data(stations)
+        //     .enter()
+        //     .append("rect")
+        //     .sort(function (a,b){
+        //         return b['properties']['total_count']-a['properties']['total_count'];
+        //     })
+        //     .attr("class", function(d){
+        //         return "bar " + d.properties.site_agency
+        //     })
+        //     .attr("width", chart_width/stations.length -1)
+        //     .attr("x", function(d, i){
+        //         return i * (chart_width/stations.length);
+        //     })
+        //     .attr("height", function(d,i){
+        //         return chart_height - yScale(parseFloat(d['properties']['total_count']))
+        //     })
+        //     .attr("y", function(d, i){
+        //         return yScale(parseFloat(d['properties']['total_count']))
+        //     })
+        //     .style("fill", function(d){
+        //         return stationColorScale(d['properties']['total_count'])
+        //     })
+
+        // // place axis
+        // svgChart.append("g")
+        //     .attr("class", "c2p1 chartAxis left")
+        //     .call(yAxis);
+
+        
+
 
     };
 
@@ -569,7 +720,7 @@
             .style("stroke", "#6079a3")
         d3.selectAll(".c2p2.obs_stations")
             .style("opacity", 1)
-            .style("fill", "#ffffff")
+            // .style("fill", "#ffffff")
         // d3.selectAll(".c2p2.obs_stations.station" + data.seg_id_nat)
         //     .lower()  
         // d3.selectAll(".c2p1.river_segments.seg" + data.seg_id_nat)
@@ -585,28 +736,50 @@
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
-    function setSegments_c2p2(segments, stations, bay, reservoirs, dams, watershed, map, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale){
+    function setSegments_c2p2(segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
         
-        // add watershed basin to map
-        var drb_watershed = map.append("path")
-            .datum(watershed)
-            .attr("class", "c2p2 watershed")
+        // add basin_buffered basin to map
+        var drb_basin_buffered = map.append("path")
+            .datum(basin_buffered)
+            .attr("class", "c2p2 basin_buffered")
             .attr("d", map_path)
             .style("fill", "#000000")
             .style("stroke", "#000000")
             .style("opacity", 1)
             .on("mouseover", function(d) {
-                mouseoverWshed_c2p2(d)
+                mouseoverDimSegs_c2p2(d)
             }) 
             .on("mouseout", function(d) {
-                mouseoutWshed_c2p2(d)
+                mouseoutDimSegs_c2p2(d)
             });
 
         // add delaware bay to map
         var drb_bay = map.append("path")
             .datum(bay)
             .attr("class", "c2p2 delaware_bay")
-            .attr("d", map_path);
+            .attr("d", map_path)
+            .on("mouseover", function(d) {
+                mouseoverDimSegs_c2p2(d)
+            }) 
+            .on("mouseout", function(d) {
+                mouseoutDimSegs_c2p2(d)
+            });
+
+        // add drb reservoirs to map
+        var drb_reservoirs = map.selectAll(".reservoirs")
+            // bind polygons to each element to be created
+            .data(reservoirs)
+            // create an element for each datum
+            .enter()
+            // append each element to the svg as a path element
+            .append("path")
+            // project polygons
+            .attr("d", map_path)
+            // assign class for styling
+            .attr("class", function(d){
+                return "c2p2 reservoirs res_id" + d.properties.GRAND_ID
+            })
+            .style("stroke-width", 1)
 
         // set tooltip
         var tooltip = d3.select("#DRB_map_c2p2")
@@ -669,29 +842,13 @@
             // .style("stroke", function(d){
             //     var value = d.properties['total_count'];
             //     if(value){
-            //       return colorScale(value);
+            //       return segmentColorScale(value);
             //     } else {
             //       return "#ccc";
             //     };
             // });
 
-        // add drb reservoirs to map
-        var drb_reservoirs = d3.selectAll(".reservoirs")
-            // bind polygons to each element to be created
-            .data(reservoirs)
-            // create an element for each datum
-            .enter()
-            // append each element to the svg as a path element
-            .append("path")
-            // project polygons
-            .attr("d", map_path)
-            // assign class for styling
-            .attr("class", function(d){
-                return "reservoirs res_id" + d.GRAND_ID
-            })
-            .style("fill", "#e71212")
-            .style("stroke", "red")
-            .style("stroke-width", 3)
+
 
         // // add drb stations to map
         // var drb_stations = map.selectAll(".obs_stations")
@@ -973,7 +1130,7 @@
     };
 
     // *********************************************************************//
-    function mouseoverWshed_c2p2(data) {
+    function mouseoverDimSegs_c2p2(data) {
 
         d3.selectAll(".c2p2.delaware_bay")
             .style("fill", "#172c4f")
@@ -983,7 +1140,7 @@
     };
 
     // *********************************************************************//
-    function mouseoutWshed_c2p2(data) {
+    function mouseoutDimSegs_c2p2(data) {
 
         d3.selectAll(".c2p2.delaware_bay")
             .style("fill", "#6079a3")
@@ -1092,7 +1249,7 @@
         d3.selectAll(".c2p2.delaware_bay")
             .style("fill", "#6079a3")
             .lower()
-        d3.selectAll(".c2p2.watershed")
+        d3.selectAll(".c2p2.basin_buffered")
             .lower()
         d3.selectAll("g")
             .raise()
@@ -1159,7 +1316,7 @@
         d3.selectAll(".c2p2.delaware_bay")
             .style("fill", "#6079a3")
             .lower()
-        d3.selectAll(".c2p2.watershed")
+        d3.selectAll(".c2p2.basin_buffered")
             .lower()
 
     };
@@ -1169,13 +1326,50 @@
     // *********************************************************************//
     // *********************************************************************//
 
-    function setSegments_c2p3(segments, stations, bay, map, map_path, scaleBarTop, scaleBarBottom, widthScale, colorScale){
-            
+    function setSegments_c2p3(segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
+        
+        // add basin_buffered basin to map
+        var drb_basin_buffered = map.append("path")
+            .datum(basin_buffered)
+            .attr("class", "c2p3 basin_buffered")
+            .attr("d", map_path)
+            .style("fill", "#000000")
+            .style("stroke", "#000000")
+            .style("opacity", 1)
+            .on("mouseover", function(d) {
+                mouseoverDimSegs_c2p3(d)
+            }) 
+            .on("mouseout", function(d) {
+                mouseoutDimSegs_c2p3(d)
+            });
+
         // add delaware bay to map
         var drb_bay = map.append("path")
             .datum(bay)
             .attr("class", "c2p3 delaware_bay")
-            .attr("d", map_path);
+            .attr("d", map_path)
+            .on("mouseover", function(d) {
+                mouseoverDimSegs_c2p3(d)
+            }) 
+            .on("mouseout", function(d) {
+                mouseoutDimSegs_c2p3(d)
+            });
+
+        // add drb reservoirs to map
+        var drb_reservoirs = map.selectAll(".reservoirs")
+            // bind polygons to each element to be created
+            .data(reservoirs)
+            // create an element for each datum
+            .enter()
+            // append each element to the svg as a path element
+            .append("path")
+            // project polygons
+            .attr("d", map_path)
+            // assign class for styling
+            .attr("class", function(d){
+                return "c2p3 reservoirs res_id" + d.properties.GRAND_ID
+            })
+            .style("stroke-width", 1)
 
         // set tooltip
         var tooltip = d3.select("#DRB_map_c2p3")
@@ -1235,6 +1429,8 @@
                 mouseoutSeg_c2p3(d, tooltip);
             });
         
+
+
         // add scale bar
         map.append("g").call(scaleBarTop)
         map.append("g").call(scaleBarBottom)
@@ -1482,6 +1678,32 @@
     };
 
     // *********************************************************************//
+    function mouseoverDimSegs_c2p3(data) {
+
+        d3.selectAll(".c2p3.reservoirs")
+            .style("fill", "#172c4f")
+            .style("stroke", "#172c4f")
+        d3.selectAll(".c2p3.delaware_bay")
+            .style("fill", "#172c4f")
+        d3.selectAll(".c2p3.river_segments")
+            .style("stroke", "#172c4f")
+            
+    };
+
+    // *********************************************************************//
+    function mouseoutDimSegs_c2p3(data) {
+
+        d3.selectAll(".c2p3.reservoirs")
+            .style("fill", "#6079a3")
+            .style("stroke", "#6079a3")
+        d3.selectAll(".c2p3.delaware_bay")
+            .style("fill", "#6079a3")
+        d3.selectAll(".c2p3.river_segments")
+            .style("stroke", "#6079a3")
+
+    };
+
+    // *********************************************************************//
     function mousemoveSeg_c2p3(data, tooltip, position) {
 
         var num_obs = data.properties.year_count['2019'];
@@ -1540,6 +1762,9 @@
             .raise();
         // d3.selectAll(".c2p3.cell.segment" + data.seg_id_nat)
         //     .raise()
+        d3.selectAll("c2p3.reservoirs")
+            .style("fill", "#172c4f")
+            .style("stroke", "#172c4f")
         d3.selectAll(".c2p3.delaware_bay")
             .style("fill", "#172c4f")
         d3.selectAll(".c2p3.river_segments")
@@ -1579,8 +1804,14 @@
             .attr("opacity", 1)
             .attr("filter","None")
             .lower()
+        d3.selectAll(".c2p3.reservoirs")
+            .style("fill", "#6079a3")
+            .style("stroke", "#6079a3")
+            .lower()
         d3.selectAll(".c2p3.delaware_bay")
             .style("fill", "#6079a3")
+            .lower()
+        d3.selectAll(".c2p3.basin_buffered")
             .lower()
         d3.selectAll("g")
             .raise()
@@ -1617,6 +1848,9 @@
         d3.selectAll(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
             .style("opacity", 0)
             // .raise()
+        d3.selectAll(".c2p3.reservoirs")
+            .style("fill", "#172c4f")
+            .style("stroke", "#172c4f")
         d3.selectAll(".c2p3.delaware_bay")
             .style("fill", "#172c4f")
         d3.selectAll(".c2p3.river_segments")
@@ -1660,8 +1894,14 @@
             .style("stroke", "#6079a3")
             .attr("opacity", 1)
             .lower()
+        d3.selectAll(".c2p3.reservoirs")
+            .style("fill", "#6079a3")
+            .style("stroke", "#6079a3")
+            .lower()
         d3.selectAll(".c2p3.delaware_bay")
             .style("fill", "#6079a3")
+            .lower()
+        d3.selectAll(".c2p3.basin_buffered")
             .lower()
 
     };
