@@ -1116,19 +1116,27 @@
     // *********************************************************************//
     function createMatrix_c2p2(csv_matrix_annual, csv_annual_count, segments, timestep_c2p2){
        
-        // append the svg object ot the body of the page
+        // append the svg object to the body of the page
         var svgMatrix = d3.select("#matrixChart_c2p2")
             .append("svg")
                 .attr("viewBox", [0, 0, (matrix_width_c2p2 + matrix_margin.left + matrix_margin.right), 
                                         (matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)].join(' '))
                 // .attr("width", matrix_width_c2p2 + matrix_margin.left + matrix_margin.right)
                 // .attr("height", matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)
-                .attr("class", "c2p2 matrix")
-            .append("g")
-                .attr("class", "c2p2 transformedMatrix")
-                .attr("transform",
-                    "translate(" + matrix_margin.left + "," + matrix_margin.top + ")");
+                .attr("class", "c2p2 matrix_c2p2")
+            // .append("g")
+            //     .attr("class", "c2p2 transformedMatrix")
+            //     .attr("transform",
+            //         "translate(" + matrix_margin.left + "," + matrix_margin.top + ")")
+        
+        var tooltip = svgMatrix.append("text")
+            .attr("class", "c2p2 tooltip matrix")
 
+        svgMatrix.append("g")
+            .attr("class", "c2p2 transformedMatrix")
+            .attr("transform",
+                "translate(" + matrix_margin.left + "," + matrix_margin.top + ")")
+               
         // read in data
         var myGroups = d3.map(csv_matrix_annual, function(d){return d[timestep_c2p2];}).keys() 
         var myVars = d3.map(csv_matrix_annual, function(d){return d.seg_id_nat;}).keys() 
@@ -1170,7 +1178,9 @@
             .domain([1, temporalCountMax]) // if NOT INVERTING color scale
               
         // add the squares
-        var matrixSquares = svgMatrix.selectAll('matrixSqs')
+        var transformedMatrix = d3.select(".c2p2.transformedMatrix")
+        // var matrixSquares = svgMatrix.selectAll('matrixSqs')
+        var matrixSquares = transformedMatrix.selectAll('matrixSqs')
             .data(csv_matrix_annual, function(d) {
                 if (d.total_obs > 0) {
                     return d[timestep_c2p2] +':'+ d.seg_id_nat; /* d.seg_id_nat */
@@ -1208,16 +1218,18 @@
             .style("opacity", 1);
 
         // add the rectangles
-        createMatrixRectangles_c2p2(csv_matrix_annual, csv_annual_count, segments)
+        createMatrixRectangles_c2p2(csv_matrix_annual, csv_annual_count, segments, tooltip)
 
         // draw x axes
-        svgMatrix.append("g")
+        // svgMatrix.append("g")
+        transformedMatrix.append("g")
             .style("font-size", 10)
             .attr("transform", "translate(" + 0 + "," + matrix_height_c2p2 + ")")
             .attr("class", "c2p2 matrixAxis bottom")
             .call(d3.axisBottom(x).tickSize(0).tickValues(['1980', '1990', '2000', '2010', '2019'])) /* '1980-01', '1990-01', '2000-01', '2010-01', '2019-01' */
             // .select(".domain").remove()
-        svgMatrix.append("g")
+        // svgMatrix.append("g")
+        transformedMatrix.append("g")
             .style("font-size", 0)
             .attr("transform", "translate(" + 0 + "," + 0 + ")")
             .attr("class", "c2p2 matrixAxis top")
@@ -1225,12 +1237,14 @@
             // .select(".domain").remove()
 
         // draw y axes
-        svgMatrix.append("g")
+        // svgMatrix.append("g")
+        transformedMatrix.append("g")
             .style("font-size", 0)
             .attr("class", "c2p2 matrixAxis left")
             .call(d3.axisLeft(y).tickSize(0))
             // .select(".domain").remove()
-        svgMatrix.append("g")
+        // svgMatrix.append("g")
+        transformedMatrix.append("g")
             .style("font-size", 0)
             .attr("transform", "translate(" + matrix_width_c2p2 + "," + 0 + ")")
             .attr("class", "c2p2 matrixAxis right")
@@ -1239,7 +1253,31 @@
     };
 
     // *********************************************************************//
-    function createMatrixRectangles_c2p2(csv_matrix_annual, csv_annual_count, segments) {
+    function createMatrixRectangles_c2p2(csv_matrix_annual, csv_annual_count, segments, tooltip) {
+
+        // // find root svg element
+        var svg_matrix_c2p2 = document.querySelector('.matrix_c2p2');
+
+        // // create a SVGPoint for future math
+        var pt_matrix_c2p2 = svg_matrix_c2p2.createSVGPoint();
+
+        // //get point in global SVG space
+        function cursorPoint_matrix_c2p2(evt){
+            pt_matrix_c2p2.x = evt.clientX; pt_matrix_c2p2.y = evt.clientY;
+            return pt_matrix_c2p2.matrixTransform(svg_matrix_c2p2.getScreenCTM().inverse()); 
+        }
+
+        var loc_matrix_c2p2
+
+        // // reset coordinates when mousemoves over map svg
+        svg_matrix_c2p2.addEventListener('mousemove', function(evt){
+            loc_matrix_c2p2 = cursorPoint_matrix_c2p2(evt);
+            // console.log('x:')
+            // console.log(loc_matrix_c2p2.x)
+            // console.log('y:')
+            // console.log(loc_matrix_c2p2.y)
+        }, false);     
+
 
         // create matrix recangles variable
         var transformedMatrix = d3.select(".c2p2.transformedMatrix")
@@ -1263,17 +1301,6 @@
             .range([matrix_height_c2p2, 0])
             .domain(myVars)
             .padding(0.1);
-
-        // create a tooltip
-        var tooltip = d3.select("#matrixChart_c2p2")
-            .append("div")
-            .style("opacity", 0)
-            .attr("class", "c2p2 tooltip matrix")
-            // .style("background-color", "white")
-            // .style("border", "solid")
-            // .style("border-width", "2px")
-            // .style("border-radius", "5px")
-            .style("padding", "5px")
 
         // revised build of spatial rectangles
         var SpatialRectangles = transformedMatrix.selectAll('.c2p2.matrixSpatialRect')           
@@ -1343,8 +1370,9 @@
                 mouseoverRect_c2p2(d, tooltip);
             })
             .on("mousemove", function(d) {
-                position = d3.mouse(this);
-                mousemoveRect_c2p2(d, tooltip, position);
+                mouse_x = loc_matrix_c2p2.x
+                mouse_y = loc_matrix_c2p2.y
+                mousemoveRect_c2p2(d, tooltip, mouse_x, mouse_y);
             })
             .on("mouseout", function(d) {
                 mouseoutRect_c2p2(d, tooltip);
@@ -1496,23 +1524,18 @@
     };
 
     // *********************************************************************//
-    function mousemoveRect_c2p2(data, tooltip, position) {
+    function mousemoveRect_c2p2(data, tooltip, mouse_x, mouse_y) {
 
-        // var x = (d3.event.clientX - (window.innerWidth / 2)) - 40
-        // var y = d3.event.clientY
-        
-        // d3.select(".c2p2.tooltip.matrix")
-        //     .html(data[timestep_c2p2])
-        //     .style("left", x + "px")
-        //     .style("top", y + "px");
+        var selected_year = data[timestep_c2p2];
+        console.log(selected_year);
 
-
-        var xoffset = position[0]+10
-        var yoffset = position[1]-5
         tooltip
-            .html(data[timestep_c2p2])
-            .style("left", xoffset + "px")
-            .style("top", yoffset + "px");
+            .attr("y", mouse_y - 15)
+            .attr("x", mouse_x - 40)
+            .attr("text-align", "left")
+            .text(selected_year)
+            .raise()
+
     };
    
     // *********************************************************************//
