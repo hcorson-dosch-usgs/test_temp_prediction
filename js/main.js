@@ -22,14 +22,14 @@
     var matrix_margin = {top: 5, right: 15, bottom: 15, left: 35},
         matrix_width_c2p2 = 700 - matrix_margin.left - matrix_margin.right, //500
         matrix_width_c2p3 = 700 - matrix_margin.left - matrix_margin.right,
-        matrix_height_c2p2 = window.innerHeight*0.9 - matrix_margin.top - matrix_margin.bottom,
-        matrix_height_c2p3 = window.innerHeight*0.9 - matrix_margin.top - matrix_margin.bottom;
+        matrix_height_c2p2 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom,
+        matrix_height_c2p3 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom;
 
     // *********************************************************************//
     function setPanels(){
         // // CHAPTER 1 MAP
         var map_width_c1p1 = 600,
-            map_height_c1p1 = window.innerHeight*0.9,
+            map_height_c1p1 = window.innerHeight*0.95,
             map_margin_c1p1 = {top: 5, right: 5, bottom: 5, left: 5};
 
         //create Albers equal area conic projection centered on states surrounding DRB for ch1 maps
@@ -70,27 +70,26 @@
             .tickSize(null)
             .tickValues(null);
 
-        //create new svg container for the ch 2 panel 1 map
+        //create new svg container for the ch 1 panel 1 map
         var map_c1p1 = d3.select("#DRB_map_c1p1")
             .append("svg")
             .attr("class", "map_c1p1")
-            // .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
-            //                         (map_height + map_margin.top + map_margin.bottom)].join(' '));
-            .attr("width", map_width_c1p1)
-            .attr("height", map_height_c1p1);
+            .attr("viewBox", [0, 0, (map_width_c1p1 + map_margin_c1p1.right + map_margin_c1p1.left), 
+                                    (map_height_c1p1 + map_margin_c1p1.top + map_margin_c1p1.bottom)].join(' '));
+            // .attr("width", map_width_c1p1)
+            // .attr("height", map_height_c1p1);
 
-         
 
         // // CHAPTER 2 MAPS
         // set universal map frame dimensions for Ch 2 maps
         var map_width = 600,
-            map_height = window.innerHeight*0.9,
+            map_height = window.innerHeight*0.86,
             map_margin = {top: 5, right: 5, bottom: 5, left: 5};
 
         //create Albers equal area conic projection centered on DRB for ch2 maps
         var map_projection = d3.geoAlbers()
             .center([0, 40.558894445])
-            .rotate([75.363333335, 0, 0])
+            .rotate([76.1, 0, 0]) //75.363333335
             .parallels([39.9352537033, 41.1825351867])
             .scale(map_height*15)
             .translate([map_width / 2, map_height / 2]);
@@ -129,28 +128,28 @@
         var map_c2p1 = d3.select("#DRB_map_c2p1")
             .append("svg")
             .attr("class", "map_c2p1")
-            // .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
-            //                         (map_height + map_margin.top + map_margin.bottom)].join(' '));
-            .attr("width", map_width)
-            .attr("height", map_height);
+            .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
+                                    (map_height + map_margin.top + map_margin.bottom)].join(' '));
+            // .attr("width", map_width)
+            // .attr("height", map_height);
 
         //create new svg container for the ch 2 panel 2 map
         var map_c2p2 = d3.select("#DRB_map_c2p2")
             .append("svg")
             .attr("class", "map_c2p2")
-            // .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
-            //                         (map_height + map_margin.top + map_margin.bottom)].join(' '));
-            .attr("width", map_width)
-            .attr("height", map_height);
+            .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
+                                    (map_height + map_margin.top + map_margin.bottom)].join(' '));
+            // .attr("width", map_width)
+            // .attr("height", map_height);
 
         // create new svg container for map_c2p3
         var map_c2p3 = d3.select("#DRB_map_c2p3")
             .append("svg")
             .attr("class", "map_c2p3")
-            // .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
-            //                         (map_height + map_margin.top + map_margin.bottom)].join(' '));
-            .attr("width", map_width)
-            .attr("height", map_height);
+            .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
+                                    (map_height + map_margin.top + map_margin.bottom)].join(' '));
+            // .attr("width", map_width)
+            // .attr("height", map_height);
 
         // write function to process data for stacked bar chart
         function type(d, i, columns) {
@@ -177,7 +176,8 @@
                         d3.json("data/dams.json"),
                         d3.json("data/Segments_subset_4per_smooth_10miBuffer_diss.json"),
                         d3.json("data/cb_states_16per.json"),
-                        d3.json("data/Segments_subset_1per_smooth.json")
+                        d3.json("data/Segments_subset_1per_smooth.json"),
+                        d3.json("data/cb_states_16per_merged.json")
                     ];
         Promise.all(promises).then(callback);
 
@@ -198,6 +198,7 @@
             json_basin_buffered = data[11];
             json_states = data[12];
             json_segs_small = data[13];
+            json_states_merged = data[14];
 
             // translate topojsons
             var segments = json_segments.features; /* topojson.feature(json_segments, json_segments.objects.Segments_subset_4per_smooth).features */
@@ -208,6 +209,7 @@
             var basin_buffered = topojson.feature(json_basin_buffered, json_basin_buffered.objects.Segments_subset_4per_smooth_10miBuffer_diss);
             var states = topojson.feature(json_states, json_states.objects.cb_states);
             var segs_small = topojson.feature(json_segs_small, json_segs_small.objects.Segments_subset_1per_smooth).features;
+            var states_merged = topojson.feature(json_states_merged, json_states_merged.objects.cb_states_16per_merged);
 
             // join csv data to geojson segments
             segments = joinData(segments, csv_flow);
@@ -228,7 +230,7 @@
             // var stationColorScale = makeStationColorScale(stations);
 
             // // Set up Ch 1 panel 1 -
-            setSegments_c1p1(states, segs_small, bay, map_c1p1, map_path_c1p1, scaleBarTop_c1p1, scaleBarBottom_c1p1, widthScale_c1p1);
+            setSegments_c1p1(states, states_merged, segs_small, bay, map_c1p1, map_path_c1p1, scaleBarTop_c1p1, scaleBarBottom_c1p1, widthScale_c1p1);
 
             // // Set up Ch 2 panel 1 -
             // add DRB segments to the panel 1 map
@@ -506,10 +508,17 @@
     // *********************************************************************//
     // *********************************************************************//
 
-   function setSegments_c1p1(states, segs_small, bay, map_c1p1, map_path_c1p1, scaleBarTop_c1p1, scaleBarBottom_c1p1, widthScale) {
+   function setSegments_c1p1(states, states_merged, segs_small, bay, map_c1p1, map_path_c1p1, scaleBarTop_c1p1, scaleBarBottom_c1p1, widthScale) {
+
+        // add merged surrounding states to map
+        var states_merged = map_c1p1.append("path")
+            .datum(states_merged)
+            .attr("class", "c1p1 states_merged")
+            .attr("d", map_path_c1p1)
+            .attr("filter", "url(#shadow2)")            
 
         // add surrounding states to map
-        var state = map_c1p1.append("path")
+        var states = map_c1p1.append("path")
             .datum(states)
             .attr("class", "c1p1 states")
             .attr("d", map_path_c1p1)
@@ -937,6 +946,37 @@
     // *********************************************************************//
     function setSegments_c2p2(segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
 
+        // find root svg element
+        var svg_map_c2p2 = document.querySelector('.map_c2p2');
+
+        // create a SVGPoint for future math
+        var pt_map_c2p2 = svg_map_c2p2.createSVGPoint();
+
+        //get point in global SVG space
+        function cursorPoint(evt){
+            pt_map_c2p2.x = evt.clientX; pt_map_c2p2.y = evt.clientY;
+            return pt_map_c2p2.matrixTransform(svg_map_c2p2.getScreenCTM().inverse()); 
+        }
+
+        var loc_map_c2p2
+
+        svg_map_c2p2.addEventListener('mousemove', function(evt){
+            loc_map_c2p2 = cursorPoint(evt);
+            // console.log(loc_map_c2p2.x)
+            // console.log(loc_map_c2p2.y)
+        }, false);
+
+        // set tooltip
+        var tooltip = d3.select("#DRB_map_c2p2")
+            .append("div")
+            .style("opacity", 0)
+            .attr("class", "c2p2 tooltip map")
+            // .style("background-color", "white")
+            // .style("border", "solid")
+            // .style("border-width", "2px")
+            // .style("border-radius", "5px")
+            .style("padding", "5px")
+
         // add drb segments to map BACKGROUND
         var drb_segments = map.selectAll(".river_segments")
             // bind segments to each element to be created
@@ -957,8 +997,12 @@
                 mouseoverSeg_c2p2(d, tooltip);
             })
             .on("mousemove", function(d) {
-                position = d3.mouse(this);
-                mousemoveSeg_c2p2(d, tooltip, position);
+                mouse_x = loc_map_c2p2.x
+                mouse_y = loc_map_c2p2.y
+                console.log(loc_map_c2p2.x)
+                console.log(loc_map_c2p2.y)
+                // position = d3.mouse(this);
+                mousemoveSeg_c2p2(d, tooltip, mouse_x, mouse_y); // position
             })
             .on("mouseout", function(d) {
                 mouseoutSeg_c2p2(d, tooltip);
@@ -1007,17 +1051,6 @@
             })
             .style("stroke-width", 1)
 
-        // set tooltip
-        var tooltip = d3.select("#DRB_map_c2p2")
-            .append("div")
-            .style("opacity", 0)
-            .attr("class", "c2p2 tooltip map")
-            // .style("background-color", "white")
-            // .style("border", "solid")
-            // .style("border-width", "2px")
-            // .style("border-radius", "5px")
-            .style("padding", "5px")
-
         // add drb segments to map
         var drb_segments = map.selectAll(".river_segments")
             // bind segments to each element to be created
@@ -1057,8 +1090,10 @@
                 mouseoverSeg_c2p2(d, tooltip);
             })
             .on("mousemove", function(d) {
-                position = d3.mouse(this);
-                mousemoveSeg_c2p2(d, tooltip, position);
+                mouse_x = loc_map_c2p2.x
+                mouse_y = loc_map_c2p2.y
+                // position = d3.mouse(this);
+                mousemoveSeg_c2p2(d, tooltip, mouse_x, mouse_y); //position
             })
             .on("mouseout", function(d) {
                 mouseoutSeg_c2p2(d, tooltip);
@@ -1177,10 +1212,10 @@
         // append the svg object ot the body of the page
         var svgMatrix = d3.select("#matrixChart_c2p2")
             .append("svg")
-                // .attr("viewBox", [0, 0, (matrix_width_c2p2 + matrix_margin.left + matrix_margin.right), 
-                //                         (matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)].join(' '))
-                .attr("width", matrix_width_c2p2 + matrix_margin.left + matrix_margin.right)
-                .attr("height", matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)
+                .attr("viewBox", [0, 0, (matrix_width_c2p2 + matrix_margin.left + matrix_margin.right), 
+                                        (matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)].join(' '))
+                // .attr("width", matrix_width_c2p2 + matrix_margin.left + matrix_margin.right)
+                // .attr("height", matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)
                 .attr("class", "c2p2 matrix")
             .append("g")
                 .attr("class", "c2p2 transformedMatrix")
@@ -1437,15 +1472,17 @@
 
 
     // *********************************************************************//
-    function mousemoveSeg_c2p2(data, tooltip, position) {
+    function mousemoveSeg_c2p2(data, tooltip, mouse_x, mouse_y) { //position
         
         var num_obs = data.properties.total_count;
         
         tooltip
             .html(d3.format(',')(num_obs) + "<p>obs.")
             // .html("Segment " + data.seg_id_nat)
-            .style("left", position[0]+40 + "px")
-            .style("top", position[1]-30 + "px")
+            // .style("left", position[0]+40 + "px")
+            // .style("top", position[1]-30 + "px")
+            .style("left", mouse_x + "px")
+            .style("top", mouse_y + "px")
             .style("text-align", "left"); /* position[1]+110 */
     };
 
@@ -1782,10 +1819,10 @@
         // append the svg object ot the body of the page
         var svgMatrix = d3.select("#matrixChart_c2p3")
             .append("svg")
-                // .attr("viewBox", [0, 0, (matrix_width_c2p3 + matrix_margin.left + matrix_margin.right), 
-                //                         (matrix_height_c2p3 + matrix_margin.top + matrix_margin.bottom)].join(' '))
-                .attr("width", matrix_width_c2p3 + matrix_margin.left + matrix_margin.right)
-                .attr("height", matrix_height_c2p3 + matrix_margin.top + matrix_margin.bottom)
+                .attr("viewBox", [0, 0, (matrix_width_c2p3 + matrix_margin.left + matrix_margin.right), 
+                                        (matrix_height_c2p3 + matrix_margin.top + matrix_margin.bottom)].join(' '))
+                // .attr("width", matrix_width_c2p3 + matrix_margin.left + matrix_margin.right)
+                // .attr("height", matrix_height_c2p3 + matrix_margin.top + matrix_margin.bottom)
                 .attr("class", "c2p3 matrix")
             .append("g")
                 .attr("class", "c2p3 transformedMatrix")
