@@ -106,7 +106,8 @@ body {
 }
 
 .tooltip {
-  color: #ffffff;
+  fill: #ffffff;
+  /* color: #ffffff; */
   font-family: sans-serif;
   font-size: 0.7em;
   font-weight: bold;

@@ -962,20 +962,27 @@
 
         svg_map_c2p2.addEventListener('mousemove', function(evt){
             loc_map_c2p2 = cursorPoint(evt);
-            // console.log(loc_map_c2p2.x)
-            // console.log(loc_map_c2p2.y)
+            console.log('x:')
+            console.log(loc_map_c2p2.x)
+            console.log('y:')
+            console.log(loc_map_c2p2.y)
         }, false);
 
         // set tooltip
-        var tooltip = d3.select("#DRB_map_c2p2")
-            .append("div")
-            .style("opacity", 0)
+        // var tooltip = d3.select("#DRB_map_c2p2")
+        //     .append("div")
+        //     .style("opacity", 0)
+        //     .attr("class", "c2p2 tooltip map")
+        //     // .style("background-color", "white")
+        //     // .style("border", "solid")
+        //     // .style("border-width", "2px")
+        //     // .style("border-radius", "5px")
+        //     .style("padding", "5px")
+
+        // try adding tooltip to map svg
+        var tooltip = map.append("text")
             .attr("class", "c2p2 tooltip map")
-            // .style("background-color", "white")
-            // .style("border", "solid")
-            // .style("border-width", "2px")
-            // .style("border-radius", "5px")
-            .style("padding", "5px")
+                 
 
         // add drb segments to map BACKGROUND
         var drb_segments = map.selectAll(".river_segments")
@@ -999,8 +1006,10 @@
             .on("mousemove", function(d) {
                 mouse_x = loc_map_c2p2.x
                 mouse_y = loc_map_c2p2.y
-                console.log(loc_map_c2p2.x)
-                console.log(loc_map_c2p2.y)
+                // console.log('x:')
+                // console.log(loc_map_c2p2.x)
+                // console.log('y:')
+                // console.log(loc_map_c2p2.y)
                 // position = d3.mouse(this);
                 mousemoveSeg_c2p2(d, tooltip, mouse_x, mouse_y); // position
             })
@@ -1072,8 +1081,6 @@
 
                 // return "c2p2 river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
             })
-            // add filter
-            // .attr("filter", "url(#shadow1)")
             // project segments
             .attr("d", map_path)
             // add stroke width based on widthScale function
@@ -1098,89 +1105,7 @@
             .on("mouseout", function(d) {
                 mouseoutSeg_c2p2(d, tooltip);
             });
-            // // set color based on colorScale function
-            // .style("stroke", function(d){
-            //     var value = d.properties['total_count'];
-            //     if(value){
-            //       return segmentColorScale(value);
-            //     } else {
-            //       return "#ccc";
-            //     };
-            // });            
-
-        // add drb segments to map
-        var drb_segments = map.selectAll(".river_segments")
-            // bind segments to each element to be created
-            .data(segments)
-            // create an element for each datum
-            .enter()
-            // append each element to the svg as a path element
-            .append("path")
-            // assign class for styling
-            .attr("class", function(d){
-                var seg_class = 'c2p2 river_segments seg'
-                seg_class += d.seg_id_nat
-                for (key in d.properties.year_count) {
-                    if (d.properties.year_count[key]) {
-                        seg_class += " " + timestep_c2p2 + key
-                    }
-                }
-                return seg_class
-
-                // return "c2p2 river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
-            })
-            // add filter
-            // .attr("filter", "url(#shadow1)")
-            // project segments
-            .attr("d", map_path)
-            // add stroke width based on widthScale function
-            .style("stroke-width", function(d){
-                var value = d.properties['avg_ann_flow'];
-                if (value){
-                    return widthScale(value);
-                } else {
-                    return "#ccc";
-                }
-            })
-            .style("fill", "None")
-            .on("mouseover", function(d) {
-                mouseoverSeg_c2p2(d, tooltip);
-            })
-            .on("mousemove", function(d) {
-                position = d3.mouse(this);
-                mousemoveSeg_c2p2(d, tooltip, position);
-            })
-            .on("mouseout", function(d) {
-                mouseoutSeg_c2p2(d, tooltip);
-            });
-            // // set color based on colorScale function
-            // .style("stroke", function(d){
-            //     var value = d.properties['total_count'];
-            //     if(value){
-            //       return segmentColorScale(value);
-            //     } else {
-            //       return "#ccc";
-            //     };
-            // });
-
-        // // add drb stations to map
-        // var drb_stations = map.selectAll(".obs_stations")
-        //     // bind points to each element to be created
-        //     .data(stations)
-        //     // create an element for each datum
-        //     .enter()
-        //     // append each element to the svg as a circle element
-        //     .append("path")
-        //     // project points and SET SIZE
-        //     .attr("d", map_path.pointRadius(2))
-        //     // assign class for styling
-        //     .attr("class", function(d){
-        //         return "c2p2 obs_stations station" + d.id
-        //     })
-        //     .style("fill", "#ffffff")
-        //     .style("stroke", "#000000")
-        //     .style("stroke-width", 0.4)
-        //     .style("opacity", 0.7)
+           
 
         // // add drb dams to map
         // var drb_dams = d3.selectAll(".dams")
@@ -1475,15 +1400,23 @@
     function mousemoveSeg_c2p2(data, tooltip, mouse_x, mouse_y) { //position
         
         var num_obs = data.properties.total_count;
-        
+
         tooltip
-            .html(d3.format(',')(num_obs) + "<p>obs.")
-            // .html("Segment " + data.seg_id_nat)
-            // .style("left", position[0]+40 + "px")
-            // .style("top", position[1]-30 + "px")
-            .style("left", mouse_x + "px")
-            .style("top", mouse_y + "px")
-            .style("text-align", "left"); /* position[1]+110 */
+            .attr("y", mouse_y - 15)
+            .attr("x", mouse_x + 15)
+            .attr("text-align", "left")
+            .text(d3.format(',')(num_obs) + " obs.")
+            .raise()
+
+        
+        // tooltip
+        //     .html(d3.format(',')(num_obs) + "<p>obs.")
+        //     // .html("Segment " + data.seg_id_nat)
+        //     // .style("left", position[0]+40 + "px")
+        //     // .style("top", position[1]-30 + "px")
+        //     .style("left", mouse_x + "px")
+        //     .style("top", mouse_y + "px")
+        //     .style("text-align", "left"); /* position[1]+110 */
     };
 
     // *********************************************************************//
