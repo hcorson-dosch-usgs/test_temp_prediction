@@ -953,33 +953,23 @@
         var pt_map_c2p2 = svg_map_c2p2.createSVGPoint();
 
         //get point in global SVG space
-        function cursorPoint(evt){
+        function cursorPoint_c2p2(evt){
             pt_map_c2p2.x = evt.clientX; pt_map_c2p2.y = evt.clientY;
             return pt_map_c2p2.matrixTransform(svg_map_c2p2.getScreenCTM().inverse()); 
         }
 
         var loc_map_c2p2
 
+        // reset coordinates when mousemoves over map svg
         svg_map_c2p2.addEventListener('mousemove', function(evt){
-            loc_map_c2p2 = cursorPoint(evt);
-            console.log('x:')
-            console.log(loc_map_c2p2.x)
-            console.log('y:')
-            console.log(loc_map_c2p2.y)
+            loc_map_c2p2 = cursorPoint_c2p2(evt);
+            // console.log('x:')
+            // console.log(loc_map_c2p2.x)
+            // console.log('y:')
+            // console.log(loc_map_c2p2.y)
         }, false);
 
-        // set tooltip
-        // var tooltip = d3.select("#DRB_map_c2p2")
-        //     .append("div")
-        //     .style("opacity", 0)
-        //     .attr("class", "c2p2 tooltip map")
-        //     // .style("background-color", "white")
-        //     // .style("border", "solid")
-        //     // .style("border-width", "2px")
-        //     // .style("border-radius", "5px")
-        //     .style("padding", "5px")
-
-        // try adding tooltip to map svg
+        // add tooltip to map svg
         var tooltip = map.append("text")
             .attr("class", "c2p2 tooltip map")
                  
@@ -1006,11 +996,6 @@
             .on("mousemove", function(d) {
                 mouse_x = loc_map_c2p2.x
                 mouse_y = loc_map_c2p2.y
-                // console.log('x:')
-                // console.log(loc_map_c2p2.x)
-                // console.log('y:')
-                // console.log(loc_map_c2p2.y)
-                // position = d3.mouse(this);
                 mousemoveSeg_c2p2(d, tooltip, mouse_x, mouse_y); // position
             })
             .on("mouseout", function(d) {
@@ -1078,8 +1063,6 @@
                     }
                 }
                 return seg_class
-
-                // return "c2p2 river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
             })
             // project segments
             .attr("d", map_path)
@@ -1099,8 +1082,7 @@
             .on("mousemove", function(d) {
                 mouse_x = loc_map_c2p2.x
                 mouse_y = loc_map_c2p2.y
-                // position = d3.mouse(this);
-                mousemoveSeg_c2p2(d, tooltip, mouse_x, mouse_y); //position
+                mousemoveSeg_c2p2(d, tooltip, mouse_x, mouse_y); 
             })
             .on("mouseout", function(d) {
                 mouseoutSeg_c2p2(d, tooltip);
@@ -1397,7 +1379,7 @@
 
 
     // *********************************************************************//
-    function mousemoveSeg_c2p2(data, tooltip, mouse_x, mouse_y) { //position
+    function mousemoveSeg_c2p2(data, tooltip, mouse_x, mouse_y) { 
         
         var num_obs = data.properties.total_count;
 
@@ -1408,15 +1390,6 @@
             .text(d3.format(',')(num_obs) + " obs.")
             .raise()
 
-        
-        // tooltip
-        //     .html(d3.format(',')(num_obs) + "<p>obs.")
-        //     // .html("Segment " + data.seg_id_nat)
-        //     // .style("left", position[0]+40 + "px")
-        //     // .style("top", position[1]-30 + "px")
-        //     .style("left", mouse_x + "px")
-        //     .style("top", mouse_y + "px")
-        //     .style("text-align", "left"); /* position[1]+110 */
     };
 
     // *********************************************************************//
@@ -1610,6 +1583,33 @@
 
     function setSegments_c2p3(segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
 
+        // find root svg element
+        var svg_map_c2p3 = document.querySelector('.map_c2p3');
+
+        // create a SVGPoint for future math
+        var pt_map_c2p3 = svg_map_c2p3.createSVGPoint();
+
+        //get point in global SVG space
+        function cursorPoint_c2p3(evt){
+            pt_map_c2p3.x = evt.clientX; pt_map_c2p3.y = evt.clientY;
+            return pt_map_c2p3.matrixTransform(svg_map_c2p3.getScreenCTM().inverse()); 
+        }
+
+        var loc_map_c2p3
+
+        // reset coordinates when mousemoves over map svg
+        svg_map_c2p3.addEventListener('mousemove', function(evt){
+            loc_map_c2p3 = cursorPoint_c2p3(evt);
+            // console.log('x:')
+            // console.log(loc_map_c2p3.x)
+            // console.log('y:')
+            // console.log(loc_map_c2p3.y)
+        }, false);
+
+        // add tooltip to map svg
+        var tooltip = map.append("text")
+            .attr("class", "c2p3 tooltip map")
+
         // add drb segments to map BACKGROUND
         var drb_segments = map.selectAll(".river_segments")
             // bind segments to each element to be created
@@ -1627,14 +1627,15 @@
             .style("fill", "None")
             .style("opacity", 0)
             .on("mouseover", function(d) {
-                mouseoverSeg_c2p3(d);
+                mouseoverSeg_c2p3(d, tooltip);
             })
             .on("mousemove", function(d) {
-                position = d3.mouse(this);
-                mousemoveSeg_c2p3(d, position);
+                mouse_x = loc_map_c2p3.x
+                mouse_y = loc_map_c2p3.y
+                mousemoveSeg_c2p3(d, tooltip, mouse_x, mouse_y);
             })
             .on("mouseout", function(d) {
-                mouseoutSeg_c2p3(d);
+                mouseoutSeg_c2p3(d, tooltip);
             });
 
         // add basin_buffered basin to map
@@ -1680,18 +1681,6 @@
             })
             .style("stroke-width", 1)
 
-        // // set tooltip
-        // var tooltip = d3.select("#DRB_map_c2p3")
-        //     .append("div")
-        //     .style("opacity", 0)
-        //     .attr("class", "c2p3 tooltip")
-        //     // .style("background-color", "white")
-        //     // .style("border", "solid")
-        //     // .style("border-width", "2px")
-        //     // .style("border-radius", "5px")
-        //     .style("padding", "5px")
-
-
         // add drb segments to map
         var drb_segments = map.selectAll("river_segments")
             // bind segments to each element to be created
@@ -1728,14 +1717,15 @@
             })
             .style("fill", "None")
             .on("mouseover", function(d) {
-                mouseoverSeg_c2p3(d); // tooltip
+                mouseoverSeg_c2p3(d, tooltip); 
             })
             .on("mousemove", function(d) {
-                position = d3.mouse(this);
-                mousemoveSeg_c2p3(d, position); // tooltip
+                mouse_x = loc_map_c2p3.x
+                mouse_y = loc_map_c2p3.y
+                mousemoveSeg_c2p3(d, tooltip, mouse_x, mouse_y);
             })
             .on("mouseout", function(d) {
-                mouseoutSeg_c2p3(d); // tooltip
+                mouseoutSeg_c2p3(d, tooltip);
             });
         
 
@@ -2015,28 +2005,28 @@
     };
 
     // *********************************************************************//
-    function mousemoveSeg_c2p3(data, position) {
+    function mousemoveSeg_c2p3(data, tooltip, mouse_x, mouse_y) {
 
         var num_obs = data.properties.year_count['2019'];
-        // tooltip
-        //     .html(d3.format(',')(num_obs) + "<p>obs.")
-        //     // .html("Segment " + data.seg_id_nat)
-        //     .style("left", position[0]+35 + "px")
-        //     .style("top", position[1]-25 + "px")
-        //     .style("text-align", "left"); /* position[1]+110 */
+
+        tooltip
+            .attr("y", mouse_y - 15)
+            .attr("x", mouse_x + 15)
+            .attr("text-align", "left")
+            .text(d3.format(',')(num_obs) + " obs.")
+            .raise()      
 
     };
 
     // *********************************************************************//
-    function mouseoverSeg_c2p3(data) {
+    function mouseoverSeg_c2p3(data, tooltip) {
 
         d3.selectAll(".c2p3.matrixTemporalRect")
             .style("fill", "None")
             .style("stroke", "None")
 
-        // // TOOLTIP TURNED OFF ABOVE WHEN SEGS CREATED
-        // tooltip
-        //     .style("opacity", 1);
+        tooltip
+            .style("opacity", 1);
         d3.selectAll(".c2p3.matrixSpatialRect")
             .style("opacity", 0.7)
             .style("stroke-width", 1);
@@ -2090,15 +2080,15 @@
     };
 
     // *********************************************************************//
-    function mouseoutSeg_c2p3(data) {
+    function mouseoutSeg_c2p3(data, tooltip) {
 
         d3.selectAll(".c2p3.matrixTemporalRect")
             .style("fill", "#000000")
             .style("stroke", "#000000")
             .style("stroke-width", 2) 
 
-        // tooltip
-        //     .style("opacity", 0)
+        tooltip
+            .style("opacity", 0)
         d3.selectAll(".c2p3.matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
             .style("stroke", "None")    
             .style("stroke", "#000000") // "#ffffff"
