@@ -1124,10 +1124,6 @@
                 // .attr("width", matrix_width_c2p2 + matrix_margin.left + matrix_margin.right)
                 // .attr("height", matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)
                 .attr("class", "c2p2 matrix_c2p2")
-            // .append("g")
-            //     .attr("class", "c2p2 transformedMatrix")
-            //     .attr("transform",
-            //         "translate(" + matrix_margin.left + "," + matrix_margin.top + ")")
         
         var tooltip = svgMatrix.append("text")
             .attr("class", "c2p2 tooltip matrix")
@@ -1179,7 +1175,6 @@
               
         // add the squares
         var transformedMatrix = d3.select(".c2p2.transformedMatrix")
-        // var matrixSquares = svgMatrix.selectAll('matrixSqs')
         var matrixSquares = transformedMatrix.selectAll('matrixSqs')
             .data(csv_matrix_annual, function(d) {
                 if (d.total_obs > 0) {
@@ -1221,14 +1216,12 @@
         createMatrixRectangles_c2p2(csv_matrix_annual, csv_annual_count, segments, tooltip)
 
         // draw x axes
-        // svgMatrix.append("g")
         transformedMatrix.append("g")
             .style("font-size", 10)
             .attr("transform", "translate(" + 0 + "," + matrix_height_c2p2 + ")")
             .attr("class", "c2p2 matrixAxis bottom")
             .call(d3.axisBottom(x).tickSize(0).tickValues(['1980', '1990', '2000', '2010', '2019'])) /* '1980-01', '1990-01', '2000-01', '2010-01', '2019-01' */
             // .select(".domain").remove()
-        // svgMatrix.append("g")
         transformedMatrix.append("g")
             .style("font-size", 0)
             .attr("transform", "translate(" + 0 + "," + 0 + ")")
@@ -1237,13 +1230,11 @@
             // .select(".domain").remove()
 
         // draw y axes
-        // svgMatrix.append("g")
         transformedMatrix.append("g")
             .style("font-size", 0)
             .attr("class", "c2p2 matrixAxis left")
             .call(d3.axisLeft(y).tickSize(0))
             // .select(".domain").remove()
-        // svgMatrix.append("g")
         transformedMatrix.append("g")
             .style("font-size", 0)
             .attr("transform", "translate(" + matrix_width_c2p2 + "," + 0 + ")")
@@ -1531,7 +1522,7 @@
 
         tooltip
             .attr("y", mouse_y - 15)
-            .attr("x", mouse_x - 40)
+            .attr("x", mouse_x - 39)
             .attr("text-align", "left")
             .text(selected_year)
             .raise()
@@ -1769,11 +1760,16 @@
                                         (matrix_height_c2p3 + matrix_margin.top + matrix_margin.bottom)].join(' '))
                 // .attr("width", matrix_width_c2p3 + matrix_margin.left + matrix_margin.right)
                 // .attr("height", matrix_height_c2p3 + matrix_margin.top + matrix_margin.bottom)
-                .attr("class", "c2p3 matrix")
-            .append("g")
-                .attr("class", "c2p3 transformedMatrix")
-                .attr("transform",
-                    "translate(" + matrix_margin.left + "," + matrix_margin.top + ")");
+                .attr("class", "c2p3 matrix_c2p3")
+        
+        // append tooltip
+        var tooltip = svgMatrix.append("text")
+            .attr("class", "c2p3 tooltip matrix")
+
+        svgMatrix.append("g")
+            .attr("class", "c2p3 transformedMatrix")
+            .attr("transform",
+                "translate(" + matrix_margin.left + "," + matrix_margin.top + ")");
 
         // read in data
         var myGroups = d3.map(csv_matrix_daily_2019, function(d){return d[timestep_c2p3];}).keys() 
@@ -1818,7 +1814,8 @@
             // .domain([obsTempMin, obsTempMax]) // if NOT INVERTING color scale
               
         // add the squares
-        var matrixSquares = svgMatrix.selectAll('matrixSqs')
+        var transformedMatrix = d3.select(".c2p3.transformedMatrix")
+        var matrixSquares = transformedMatrix.selectAll('matrixSqs')
             .data(csv_matrix_daily_2019, function(d) {
                 if (d.total_obs > 0) {
                     return d[timestep_c2p3] +':'+ d.seg_id_nat; /* d.seg_id_nat */
@@ -1856,7 +1853,7 @@
             .style("opacity", 1);
 
         // add the rectangles
-        createMatrixRectangles_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments)
+        createMatrixRectangles_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments, tooltip)
 
         // draw x axes
         var parseTime = d3.timeParse("%Y-%m-%d");
@@ -1864,13 +1861,13 @@
         var formatTime = d3.timeFormat("%B");
         // console.log(formatTime(parseTime('2019-01-01')))
 
-        svgMatrix.append("g")
+        transformedMatrix.append("g")
             .style("font-size", 10)
             .attr("transform", "translate(" + 0 + "," + matrix_height_c2p3 + ")")
             .attr("class", "c2p3 matrixAxis bottom")
             .call(d3.axisBottom(x).tickSize(0).tickValues(['2019-01-01', '2019-03-01', '2019-05-01', '2019-07-01', '2019-09-01', '2019-11-01'])) //.tickFormat(formatTime(parseTime()))
             // .select(".domain").remove()
-        svgMatrix.append("g")
+        transformedMatrix.append("g")
             .style("font-size", 0)
             .attr("transform", "translate(" + 0 + "," + 0 + ")")
             .attr("class", "c2p3 matrixAxis top")
@@ -1878,12 +1875,12 @@
             // .select(".domain").remove()
 
         // draw y axes
-        svgMatrix.append("g")
+        transformedMatrix.append("g")
             .style("font-size", 0)
             .attr("class", "c2p3 matrixAxis left")
             .call(d3.axisLeft(y).tickSize(0))
             // .select(".domain").remove()
-        svgMatrix.append("g")
+        transformedMatrix.append("g")
             .style("font-size", 0)
             .attr("transform", "translate(" + matrix_width_c2p3 + "," + 0 + ")")
             .attr("class", "c2p3 matrixAxis right")
@@ -1892,7 +1889,30 @@
     };
 
     // *********************************************************************//
-    function createMatrixRectangles_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments) {
+    function createMatrixRectangles_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments, tooltip) {
+
+        // // find root svg element
+        var svg_matrix_c2p3 = document.querySelector('.matrix_c2p3');
+
+        // // create a SVGPoint for future math
+        var pt_matrix_c2p3 = svg_matrix_c2p3.createSVGPoint();
+
+        // //get point in global SVG space
+        function cursorPoint_matrix_c2p3(evt){
+            pt_matrix_c2p3.x = evt.clientX; pt_matrix_c2p3.y = evt.clientY;
+            return pt_matrix_c2p3.matrixTransform(svg_matrix_c2p3.getScreenCTM().inverse()); 
+        }
+
+        var loc_matrix_c2p3
+
+        // // reset coordinates when mousemoves over map svg
+        svg_matrix_c2p3.addEventListener('mousemove', function(evt){
+            loc_matrix_c2p3 = cursorPoint_matrix_c2p3(evt);
+            console.log('x:')
+            console.log(loc_matrix_c2p3.x)
+            console.log('y:')
+            console.log(loc_matrix_c2p3.y)
+        }, false);     
 
         // create matrix recangles variable
         var transformedMatrix = d3.select(".c2p3.transformedMatrix")
@@ -1916,17 +1936,6 @@
             .range([matrix_height_c2p3, 0])
             .domain(myVars)
             .padding(0.1);
-
-        // create a tooltip
-        var tooltip = d3.select("#matrixChart_c2p3")
-            .append("div")
-            .style("opacity", 0)
-            .attr("class", "c2p3 tooltip")
-            // .style("background-color", "white")
-            // .style("border", "solid")
-            // .style("border-width", "2px")
-            // .style("border-radius", "5px")
-            .style("padding", "5px")
 
         // revised build of spatial rectangles
         var SpatialRectangles = transformedMatrix.selectAll('.c2p3.matrixSpatialRect')           
@@ -1993,8 +2002,9 @@
                 mouseoverRect_c2p3(d, tooltip);
             })
             .on("mousemove", function(d) {
-                position = d3.mouse(this);
-                mousemoveRect_c2p3(d, tooltip, position);
+                mouse_x = loc_matrix_c2p3.x
+                mouse_y = loc_matrix_c2p3.y
+                mousemoveRect_c2p3(d, tooltip, mouse_x, mouse_y);
             })
             .on("mouseout", function(d) {
                 mouseoutRect_c2p3(d, tooltip);
@@ -2144,14 +2154,23 @@
     };
 
     // *********************************************************************//
-    function mousemoveRect_c2p3(data, tooltip, position) {
+    function mousemoveRect_c2p3(data, tooltip, mouse_x, mouse_y) {
 
-        var xoffset = position[0]-15
-        var yoffset = position[1]-5
+        var selected_year = data[timestep_c2p3];
+        console.log(selected_year);
+
+        if (mouse_x > 70){
+            var x_position = mouse_x - 60
+        } else {
+            var x_position = mouse_x + 20
+        }
+
         tooltip
-            .html(data[timestep_c2p3])
-            .style("left", xoffset + "px")
-            .style("top", yoffset + "px");
+            .attr("y", mouse_y - 20)
+            .attr("x", x_position)
+            .attr("text-align", "left")
+            .text(selected_year)
+            .raise()
 
     };
    
