@@ -33,6 +33,12 @@ body {
   color: #cecece;
 }
 
+.states {
+  fill: None;
+  stroke: #575757;
+  stroke-width: 0.5;
+}
+
 .delaware_bay {
     fill: #6079a3; 
   }

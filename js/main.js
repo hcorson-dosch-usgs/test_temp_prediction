@@ -14,8 +14,8 @@
 
     // margins, width and height for bar charts
     var chart_margin = {top: 30, right: 60, bottom: 45, left: 5},
-        chart_width = 600 - chart_margin.left - chart_margin.right, //500
-        chart_height = window.innerHeight*0.35 - chart_margin.top - chart_margin.bottom;
+        chart_width = 500 - chart_margin.left - chart_margin.right, //500
+        chart_height = window.innerHeight*0.30 - chart_margin.top - chart_margin.bottom;
 
 
     // margins, width and height for matrix charts
@@ -27,12 +27,67 @@
 
     // *********************************************************************//
     function setPanels(){
-        // set universal map frame dimensions
+        // // CHAPTER 1 MAP
+        var map_width_c1p1 = 600,
+            map_height_c1p1 = window.innerHeight*0.9,
+            map_margin_c1p1 = {top: 5, right: 5, bottom: 5, left: 5};
+
+        //create Albers equal area conic projection centered on states surrounding DRB for ch1 maps
+        var map_projection_c1p1 = d3.geoAlbers()
+            .center([0, 41.47883611])
+            .rotate([76.21902778, 0, 0])
+            .parallels([40.31476574, 42.64290648])
+            .scale(map_height_c1p1*5.5) // map_height_c1p1*6
+            .translate([map_width_c1p1 / 2, map_height_c1p1 / 2]);
+
+        var map_path_c1p1 = d3.geoPath()
+            .projection(map_projection_c1p1);
+
+        // create scale bar
+        const scaleBarTop_c1p1 = d3.geoScaleBar()
+            .orient(d3.geoScaleBottom)
+            .projection(map_projection_c1p1)
+            .size([map_width_c1p1, map_height_c1p1])
+            .left(.05)
+            .top(.94)
+            .units(d3.geoScaleKilometers)
+            .distance(150)
+            .label("150 kilometers")
+            .labelAnchor("middle")
+            .tickSize(null)
+            .tickValues(null);
+
+        const scaleBarBottom_c1p1 = d3.geoScaleBar()
+            .orient(d3.geoScaleTop)
+            .projection(map_projection_c1p1)
+            .size([map_width_c1p1, map_height_c1p1])
+            .left(.05)
+            .top(.95)
+            .units(d3.geoScaleMiles)
+            .distance(75)
+            .label("75 miles")
+            .labelAnchor("middle")
+            .tickSize(null)
+            .tickValues(null);
+
+        //create new svg container for the ch 2 panel 1 map
+        var map_c1p1 = d3.select("#DRB_map_c1p1")
+            .append("svg")
+            .attr("class", "map_c1p1")
+            // .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
+            //                         (map_height + map_margin.top + map_margin.bottom)].join(' '));
+            .attr("width", map_width_c1p1)
+            .attr("height", map_height_c1p1);
+
+         
+
+        // // CHAPTER 2 MAPS
+        // set universal map frame dimensions for Ch 2 maps
         var map_width = 600,
             map_height = window.innerHeight*0.9,
             map_margin = {top: 5, right: 5, bottom: 5, left: 5};
 
-        //create Albers equal area conic projection centered on DRB
+        //create Albers equal area conic projection centered on DRB for ch2 maps
         var map_projection = d3.geoAlbers()
             .center([0, 40.558894445])
             .rotate([75.363333335, 0, 0])
@@ -70,7 +125,7 @@
             .tickSize(null)
             .tickValues(null);
 
-        //create new svg container for the panel 2 map
+        //create new svg container for the ch 2 panel 1 map
         var map_c2p1 = d3.select("#DRB_map_c2p1")
             .append("svg")
             .attr("class", "map_c2p1")
@@ -79,7 +134,7 @@
             .attr("width", map_width)
             .attr("height", map_height);
 
-        //create new svg container for the panel 2 map
+        //create new svg container for the ch 2 panel 2 map
         var map_c2p2 = d3.select("#DRB_map_c2p2")
             .append("svg")
             .attr("class", "map_c2p2")
@@ -121,7 +176,8 @@
                         d3.json("data/reservoirs.json"),
                         d3.json("data/dams.json"),
                         d3.json("data/Segments_subset_4per_smooth_10miBuffer_diss.json"),
-                        d3.json("data/Segments_subset_4per_smooth_pt5miBuffer_symdiff.json")
+                        d3.json("data/cb_states_16per.json"),
+                        d3.json("data/Segments_subset_1per_smooth.json")
                     ];
         Promise.all(promises).then(callback);
 
@@ -140,7 +196,8 @@
             json_reservoirs = data[9];
             json_dams = data[10];
             json_basin_buffered = data[11];
-            json_segs_buffered = data[12];
+            json_states = data[12];
+            json_segs_small = data[13];
 
             // translate topojsons
             var segments = json_segments.features; /* topojson.feature(json_segments, json_segments.objects.Segments_subset_4per_smooth).features */
@@ -149,18 +206,19 @@
             var reservoirs = json_reservoirs.features;
             var dams = json_dams.features;
             var basin_buffered = topojson.feature(json_basin_buffered, json_basin_buffered.objects.Segments_subset_4per_smooth_10miBuffer_diss);
-            var segs_buffered = topojson.feature(json_segs_buffered, json_segs_buffered.objects.Segments_subset_4per_smooth_pt5miBuffer_symdiff);
-
-            console.log(reservoirs)
+            var states = topojson.feature(json_states, json_states.objects.cb_states);
+            var segs_small = topojson.feature(json_segs_small, json_segs_small.objects.Segments_subset_1per_smooth).features;
 
             // join csv data to geojson segments
             segments = joinData(segments, csv_flow);
+            segs_small = joinData(segs_small, csv_flow);
 
             // check the results
             // console.log('segments:')
             // console.log(segments);
 
             // stroke width scale
+            var widthScale_c1p1 = makeWidthScale_c1p1(csv_flow);
             var widthScale = makeWidthScale(csv_flow);
 
             // segment stroke color scale
@@ -169,21 +227,23 @@
             // station observation count color scale
             // var stationColorScale = makeStationColorScale(stations);
 
+            // // Set up Ch 1 panel 1 -
+            setSegments_c1p1(states, segs_small, bay, map_c1p1, map_path_c1p1, scaleBarTop_c1p1, scaleBarBottom_c1p1, widthScale_c1p1);
 
-            // // Set up panel 1 -
+            // // Set up Ch 2 panel 1 -
             // add DRB segments to the panel 1 map
             setSegments_c2p1(segments, stations, bay, map_c2p1, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
             // add bar chart to panel 1
             setBarChart_c2p1(csv_agency_count);
 
-            // // Set up panel 2 - 
+            // // Set up Ch 2 panel 2 - 
             // add DRB segments to the panel 2 map
             setSegments_c2p2(segments, stations, bay, reservoirs, dams, basin_buffered, map_c2p2, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
             // create panel 2 matrix
             createMatrix_c2p2(csv_matrix_annual, csv_annual_count, segments, timestep_c2p2);
 
 
-            // // Set up panel 3 - 
+            // // Set up Ch 2 panel 3 - 
             // // add DRB segments to the panel 3 map
             setSegments_c2p3(segments, stations, bay, reservoirs, dams, basin_buffered, map_c2p3, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
             // // create panel 3 matrix
@@ -207,7 +267,11 @@
                 // Pull the properties for the current geojson segment
                 var geojsonProps = segments[a].properties;
                 // set the geojson properties field to use as the key 
-                var geojsonKey = segments[a].seg_id_nat; /* geojsonProps.seg_id_nat */
+                if (segments[a].seg_id_nat){
+                    var geojsonKey = segments[a].seg_id_nat; /* geojsonProps.seg_id_nat */
+                } else {
+                    var geojsonKey = geojsonProps.seg_id_nat;
+                }
                 // where primary keys match, transfer csv data to geojson properties object
                 if (geojsonKey == csvKey){
                     // assign all attributes and values
@@ -224,7 +288,65 @@
         return segments;
     };
 
+    // *********************************************************************//
+    function makeWidthScale_c1p1(data){
+        
+        // // graduated scale
+        // set width classes
+        var widthClasses = [
+            0.5,
+            0.7,
+            1.2,
+            1.5,
+            2
+        ];
 
+        // // graduated scale
+        // create width scale generator for natural breaks classification
+        var widthScale = d3.scaleThreshold()
+            .range(widthClasses);
+        
+        // // BOTH METHODS
+        // build array of all values of flow
+        var domainArrayFlow = [];
+        for (var i=0; i<data.length; i++){
+            var val = parseFloat(data[i]['avg_ann_flow']);
+            domainArrayFlow.push(val);
+        };
+
+        // // // linear scale //
+        // var dataMax = Math.round(Math.max(...domainArrayFlow));
+
+        // // // linear scale //
+        // var widthScale = d3.scaleLinear()
+        //     // set range of possible output values
+        //     .range([0.3,3])
+        //     // define range of input values
+        //     .domain([0,dataMax]);
+
+        // // graduated scale
+        // cluster data using ckmeans clustering algoritm to create natural breaks
+        var clusters = ss.ckmeans(domainArrayFlow, 5);
+        // console.log(clusters);
+
+        // // graduated scale
+        // reset domain array to cluster minimumns
+        domainArrayFlow = clusters.map(function(d){
+            return d3.min(d);
+        });
+
+        // // graduated scale
+        // remove first value from domain array to create class breakpoints
+        domainArrayFlow.shift();
+
+        // // graduated scale
+        // assign array of last 9 cluster minimums as domain
+        widthScale.domain(domainArrayFlow);
+
+        // // BOTH METHODS
+        return widthScale;
+    };
+    
     // *********************************************************************//
     function makeWidthScale(data){
       
@@ -383,6 +505,58 @@
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
+
+   function setSegments_c1p1(states, segs_small, bay, map_c1p1, map_path_c1p1, scaleBarTop_c1p1, scaleBarBottom_c1p1, widthScale) {
+
+        // add surrounding states to map
+        var state = map_c1p1.append("path")
+            .datum(states)
+            .attr("class", "c1p1 states")
+            .attr("d", map_path_c1p1)
+
+        // add delaware bay to map
+        var drb_bay = map_c1p1.append("path")
+            .datum(bay)
+            .attr("class", "c1p1 delaware_bay")
+            .attr("d", map_path_c1p1)
+        
+        // add drb segments to map
+        var drb_segments = map_c1p1.selectAll(".river_segments")
+            // bind segments to each element to be created
+            .data(segs_small)
+            // create an element for each datum
+            .enter()
+            // append each element to the svg as a path element
+            .append("path")
+            // assign class for styling
+            .attr("class", function(d){
+                var seg_class = 'c1p1 river_segments seg'
+                seg_class += d.seg_id_nat
+                return seg_class
+            })
+            // project segments
+            .attr("d", map_path_c1p1)
+            // add stroke width based on widthScale function
+            .style("stroke-width", function(d){
+                var value = d.properties['avg_ann_flow'];
+                if (value){
+                    return widthScale(value);
+                } else {
+                    return "#ccc";
+                }
+            })
+            .style("fill", "None")
+
+        // add scale bar
+        map_c1p1.append("g").call(scaleBarTop_c1p1)
+        map_c1p1.append("g").call(scaleBarBottom_c1p1)
+   };
+
+
+    // *********************************************************************//
+    // *********************************************************************//
+    // *********************************************************************//
+    // *********************************************************************//
     function setSegments_c2p1(segments, stations, bay, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
                   
         // add delaware bay to map
@@ -469,9 +643,9 @@
             .style("fill", "#ffffff")
             .style("fill", function(d){
                 if (d.properties.site_agency == 'USGS'){
-                    return "#fcb603"
+                    return "#edb932"  
                 } else {
-                    return "#bc5eff"
+                    return "#eb4444"
                 }
             })
             .style("stroke", "#000000")
@@ -535,7 +709,7 @@
 
         // set colors
         var z = d3.scaleOrdinal()
-            .range(["#fcb603", "#bc5eff"]);
+            .range(["#edb932", "#eb4444"]);
         
         // stack to create an array for each of the series in tehdata
         var stack = d3.stack();
@@ -592,7 +766,7 @@
         // place the y axis
         g.append("g")
             .attr("class", "c2p1 chartAxis right")
-            .attr("transform", "translate(" + chart_width*0.99 + "," + 0 + ")")
+            .attr("transform", "translate(" + chart_width*0.96 + "," + 0 + ")")
             .call(d3.axisRight(y).ticks(10, "s").tickSize(-chart_width))
             .select(".domain").remove()
 
