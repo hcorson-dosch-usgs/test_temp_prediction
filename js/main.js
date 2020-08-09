@@ -773,7 +773,7 @@
         svgChart.selectAll(".chartAxis.right")
             .append("text")
             .attr("y", 35)
-            .attr("x", -chart_height / 1.5)
+            .attr("x", -chart_height / 1.15)
             .attr("text-anchor", "starts")
             .attr("class", "c2p1 chartAxisText")
             .text("# of Measurements")
@@ -1640,6 +1640,33 @@
 
     function setSegments_c2p3(segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
 
+        // add drb segments to map BACKGROUND
+        var drb_segments = map.selectAll(".river_segments")
+            // bind segments to each element to be created
+            .data(segments)
+            // create an element for each datum
+            .enter()
+            // append each element to the svg as a path element
+            .append("path")
+            // assign class for styling
+            .attr("class", "c2p3 segs_transparent")
+            .attr("d", map_path)
+            // add stroke width based on widthScale function
+            .style("stroke-width", 6)
+            .style("stroke", "#000000")
+            .style("fill", "None")
+            .style("opacity", 0)
+            .on("mouseover", function(d) {
+                mouseoverSeg_c2p3(d);
+            })
+            .on("mousemove", function(d) {
+                position = d3.mouse(this);
+                mousemoveSeg_c2p3(d, position);
+            })
+            .on("mouseout", function(d) {
+                mouseoutSeg_c2p3(d);
+            });
+
         // add basin_buffered basin to map
         var drb_basin_buffered = map.append("path")
             .datum(basin_buffered)
@@ -1933,7 +1960,7 @@
                 return 'c2p3 matrixSpatialRect seg' + d.seg_id_nat;
             })
             .style("fill", function(d) { 
-                if (d.properties.year_count['2019'] > 0) {
+                if (d.properties.year_count['2019'] > 0) { //d.properties.year_count['2019'] > 0
                     return "#000000"; // "#ffffff"                  
                 } else {
                     return "#000000";  /*"#ffffff"*/
@@ -2054,21 +2081,21 @@
             //     }
             // })
             .style("stroke-width", function(data) {
-                if (data.properties.total_count > 0) { //properties.total_count
+                if (data.properties.year_count['2019'] > 0) { //properties.total_count
                     return 0;     //0.5              
                 } else {
                     return 0.5;
                 }
             })
             .style("opacity", function(data) {
-                if (data.properties.total_count > 0) { //properties.total_count
+                if (data.properties.year_count['2019'] > 0) { //properties.total_count
                     return 0;       //1            
                 } else {
                     return 1;
                 }
             })
             .style("stroke", function(data) {
-                if (data.properties.total_count > 0) {
+                if (data.properties.year_count['2019'] > 0) {
                     return "None";       //"#363636"            
                 } else {
                     return "#ffffff"; //red
