@@ -13,23 +13,24 @@
     var timestep_c2p3 = 'date'
 
     // margins, width and height for bar charts
-    var chart_margin = {top: 10, right: 10, bottom: 25, left: 45},
-        chart_width = 500 - chart_margin.left - chart_margin.right, //500
-        chart_height = window.innerHeight*0.3 - chart_margin.top - chart_margin.bottom;
+    var chart_margin = {top: 30, right: 60, bottom: 45, left: 5},
+        chart_width = 600 - chart_margin.left - chart_margin.right, //500
+        chart_height = window.innerHeight*0.35 - chart_margin.top - chart_margin.bottom;
 
 
     // margins, width and height for matrix charts
-    var matrix_margin = {top: 20, right: 15, bottom: 15, left: 35},
+    var matrix_margin = {top: 5, right: 15, bottom: 15, left: 35},
         matrix_width_c2p2 = 700 - matrix_margin.left - matrix_margin.right, //500
         matrix_width_c2p3 = 700 - matrix_margin.left - matrix_margin.right,
-        matrix_height_c2p2 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom,
-        matrix_height_c2p3 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom;
+        matrix_height_c2p2 = window.innerHeight*0.9 - matrix_margin.top - matrix_margin.bottom,
+        matrix_height_c2p3 = window.innerHeight*0.9 - matrix_margin.top - matrix_margin.bottom;
 
     // *********************************************************************//
     function setPanels(){
         // set universal map frame dimensions
-        var map_width = window.innerWidth * 0.4,
-            map_height = window.innerHeight*0.95;
+        var map_width = 600,
+            map_height = window.innerHeight*0.9,
+            map_margin = {top: 5, right: 5, bottom: 5, left: 5};
 
         //create Albers equal area conic projection centered on DRB
         var map_projection = d3.geoAlbers()
@@ -73,6 +74,8 @@
         var map_c2p1 = d3.select("#DRB_map_c2p1")
             .append("svg")
             .attr("class", "map_c2p1")
+            // .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
+            //                         (map_height + map_margin.top + map_margin.bottom)].join(' '));
             .attr("width", map_width)
             .attr("height", map_height);
 
@@ -80,6 +83,8 @@
         var map_c2p2 = d3.select("#DRB_map_c2p2")
             .append("svg")
             .attr("class", "map_c2p2")
+            // .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
+            //                         (map_height + map_margin.top + map_margin.bottom)].join(' '));
             .attr("width", map_width)
             .attr("height", map_height);
 
@@ -87,6 +92,8 @@
         var map_c2p3 = d3.select("#DRB_map_c2p3")
             .append("svg")
             .attr("class", "map_c2p3")
+            // .attr("viewBox", [0, 0, (map_width + map_margin.right + map_margin.left), 
+            //                         (map_height + map_margin.top + map_margin.bottom)].join(' '));
             .attr("width", map_width)
             .attr("height", map_height);
 
@@ -506,8 +513,10 @@
 
         var svgChart = d3.select("#barChart_c2p1")
             .append("svg")
-                .attr("width", chart_width + chart_margin.left + chart_margin.right)
-                .attr("height", chart_height + chart_margin.top + chart_margin.bottom)
+                .attr("viewBox", [0, 0, (chart_width +  chart_margin.right + chart_margin.left), 
+                                        (chart_height + chart_margin.top + chart_margin.bottom)].join(' '))
+                // .attr("width", chart_width + chart_margin.left + chart_margin.right)
+                // .attr("height", chart_height + chart_margin.top + chart_margin.bottom)
                 .attr("class", "c2p1 barChart")
             g = svgChart.append("g")
                 .attr("class", "c2p1 transformedBarChart")
@@ -568,40 +577,56 @@
         g.append("g")
             .attr("class", "c2p1 chartAxis bottom")
             .attr("transform", "translate(0," + chart_height + ")")
-            .call(d3.axisBottom(x).tickValues(['1980', '1985', '1990', '1995', '2000', '2005', '2010', '2015', '2019' ]));
-        
+            .call(d3.axisBottom(x).tickValues(['1980', '1985', '1990', '1995', '2000', '2005', '2010', '2015', '2019' ]).tickSize(0))
+            .select(".domain").remove()
+
+
+        g.selectAll('text')
+            .attr("y", 5)
+            .attr("x", -28)
+            .attr("dy", ".35em")
+            .attr("transform", "rotate(-45)")
+            .style("text-anchor", "start")
+
+
         // place the y axis
         g.append("g")
-            .attr("class", "c2p1 chartAxis left")
-            .call(d3.axisLeft(y).ticks(10, "s"))
+            .attr("class", "c2p1 chartAxis right")
+            .attr("transform", "translate(" + chart_width*0.99 + "," + 0 + ")")
+            .call(d3.axisRight(y).ticks(10, "s").tickSize(-chart_width))
+            .select(".domain").remove()
+
+        svgChart.selectAll(".chartAxis.right")
             .append("text")
-                .attr("y", -35)
-                .attr("x", -80)
-                .attr("text-anchor", "starts")
-                .attr("class", "c2p1 chartAxisText")
-                .attr("fill", "#ffffff")
-                .text("# of Observations")
-                .attr("transform", "rotate(-90)")
+            .attr("y", 35)
+            .attr("x", -chart_height / 1.5)
+            .attr("text-anchor", "starts")
+            .attr("class", "c2p1 chartAxisText")
+            .text("# of Measurements")
+            .attr("transform", "rotate(-90)")
+
+        svgChart.selectAll(".tick line").attr("stroke", "#000000")
 
         //  make the legend
         var legend = g.selectAll(".legend")
             .data(data.columns.slice(1).reverse())
             .enter().append("g")
-                .attr("class", "legend")
+                .attr("class", "c2p1 barChart legend")
                 .attr("transform", function(d, i) { 
-                    return "translate(" + 0 + "," + i * 20 + ")"; 
+                    return "translate(" + 0 + "," + i * 17 + ")"; 
                 })
-                .style("font", "10px sans-serif")
+                // .style("font", "10px sans-serif")
+                // .style("fill", "#ffffff")
         
         legend.append("rect")
-            .attr("x", chart_width + 18)
-            .attr("width", 18)
-            .attr("height", 18)
+            .attr("x", 14)
+            .attr("width", 8)
+            .attr("height", 8)
             .attr("fill", z);
 
         legend.append("text")
-            .attr("x", chart_width + 44)
-            .attr("y", 9)
+            .attr("x", 30)
+            .attr("y", 4)
             .attr("dy", ".35em")
             .attr("text-anchor", "start")
             .text(function(d) { return d; });
@@ -737,7 +762,34 @@
     // *********************************************************************//
     // *********************************************************************//
     function setSegments_c2p2(segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
-        
+
+        // add drb segments to map BACKGROUND
+        var drb_segments = map.selectAll(".river_segments")
+            // bind segments to each element to be created
+            .data(segments)
+            // create an element for each datum
+            .enter()
+            // append each element to the svg as a path element
+            .append("path")
+            // assign class for styling
+            .attr("class", "c2p2 segs_transparent")
+            .attr("d", map_path)
+            // add stroke width based on widthScale function
+            .style("stroke-width", 6)
+            .style("stroke", "#000000")
+            .style("fill", "None")
+            .style("opacity", 0)
+            .on("mouseover", function(d) {
+                mouseoverSeg_c2p2(d, tooltip);
+            })
+            .on("mousemove", function(d) {
+                position = d3.mouse(this);
+                mousemoveSeg_c2p2(d, tooltip, position);
+            })
+            .on("mouseout", function(d) {
+                mouseoutSeg_c2p2(d, tooltip);
+            });
+
         // add basin_buffered basin to map
         var drb_basin_buffered = map.append("path")
             .datum(basin_buffered)
@@ -785,13 +837,67 @@
         var tooltip = d3.select("#DRB_map_c2p2")
             .append("div")
             .style("opacity", 0)
-            .attr("class", "c2p2 tooltip")
+            .attr("class", "c2p2 tooltip map")
             // .style("background-color", "white")
             // .style("border", "solid")
             // .style("border-width", "2px")
             // .style("border-radius", "5px")
             .style("padding", "5px")
 
+        // add drb segments to map
+        var drb_segments = map.selectAll(".river_segments")
+            // bind segments to each element to be created
+            .data(segments)
+            // create an element for each datum
+            .enter()
+            // append each element to the svg as a path element
+            .append("path")
+            // assign class for styling
+            .attr("class", function(d){
+                var seg_class = 'c2p2 river_segments seg'
+                seg_class += d.seg_id_nat
+                for (key in d.properties.year_count) {
+                    if (d.properties.year_count[key]) {
+                        seg_class += " " + timestep_c2p2 + key
+                    }
+                }
+                return seg_class
+
+                // return "c2p2 river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
+            })
+            // add filter
+            // .attr("filter", "url(#shadow1)")
+            // project segments
+            .attr("d", map_path)
+            // add stroke width based on widthScale function
+            .style("stroke-width", function(d){
+                var value = d.properties['avg_ann_flow'];
+                if (value){
+                    return widthScale(value);
+                } else {
+                    return "#ccc";
+                }
+            })
+            .style("fill", "None")
+            .on("mouseover", function(d) {
+                mouseoverSeg_c2p2(d, tooltip);
+            })
+            .on("mousemove", function(d) {
+                position = d3.mouse(this);
+                mousemoveSeg_c2p2(d, tooltip, position);
+            })
+            .on("mouseout", function(d) {
+                mouseoutSeg_c2p2(d, tooltip);
+            });
+            // // set color based on colorScale function
+            // .style("stroke", function(d){
+            //     var value = d.properties['total_count'];
+            //     if(value){
+            //       return segmentColorScale(value);
+            //     } else {
+            //       return "#ccc";
+            //     };
+            // });            
 
         // add drb segments to map
         var drb_segments = map.selectAll(".river_segments")
@@ -848,8 +954,6 @@
             //     };
             // });
 
-
-
         // // add drb stations to map
         // var drb_stations = map.selectAll(".obs_stations")
         //     // bind points to each element to be created
@@ -899,6 +1003,8 @@
         // append the svg object ot the body of the page
         var svgMatrix = d3.select("#matrixChart_c2p2")
             .append("svg")
+                // .attr("viewBox", [0, 0, (matrix_width_c2p2 + matrix_margin.left + matrix_margin.right), 
+                //                         (matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)].join(' '))
                 .attr("width", matrix_width_c2p2 + matrix_margin.left + matrix_margin.right)
                 .attr("height", matrix_height_c2p2 + matrix_margin.top + matrix_margin.bottom)
                 .attr("class", "c2p2 matrix")
@@ -1046,7 +1152,7 @@
         var tooltip = d3.select("#matrixChart_c2p2")
             .append("div")
             .style("opacity", 0)
-            .attr("class", "c2p2 tooltip")
+            .attr("class", "c2p2 tooltip matrix")
             // .style("background-color", "white")
             // .style("border", "solid")
             // .style("border-width", "2px")
@@ -1132,6 +1238,9 @@
     // *********************************************************************//
     function mouseoverDimSegs_c2p2(data) {
 
+        d3.selectAll(".c2p2.reservoirs")
+            .style("fill", "#172c4f")
+            .style("stroke", "#172c4f")
         d3.selectAll(".c2p2.delaware_bay")
             .style("fill", "#172c4f")
         d3.selectAll(".c2p2.river_segments")
@@ -1142,6 +1251,9 @@
     // *********************************************************************//
     function mouseoutDimSegs_c2p2(data) {
 
+        d3.selectAll(".c2p2.reservoirs")
+            .style("fill", "#6079a3")
+            .style("stroke", "#6079a3")
         d3.selectAll(".c2p2.delaware_bay")
             .style("fill", "#6079a3")
         d3.selectAll(".c2p2.river_segments")
@@ -1152,12 +1264,14 @@
 
     // *********************************************************************//
     function mousemoveSeg_c2p2(data, tooltip, position) {
+        
         var num_obs = data.properties.total_count;
+        
         tooltip
             .html(d3.format(',')(num_obs) + "<p>obs.")
             // .html("Segment " + data.seg_id_nat)
-            .style("left", position[0]+35 + "px")
-            .style("top", position[1]-25 + "px")
+            .style("left", position[0]+40 + "px")
+            .style("top", position[1]-30 + "px")
             .style("text-align", "left"); /* position[1]+110 */
     };
 
@@ -1207,6 +1321,9 @@
             .raise();
         // d3.selectAll(".c2p2.cell.segment" + data.seg_id_nat)
         //     .raise()
+        d3.selectAll(".c2p2.reservoirs")
+            .style("fill", "#172c4f")
+            .style("stroke", "#172c4f")
         d3.selectAll(".c2p2.delaware_bay")
             .style("fill", "#172c4f")
         d3.selectAll(".c2p2.river_segments")
@@ -1246,6 +1363,10 @@
             .attr("opacity", 1)
             .attr("filter","None")
             .lower()
+        d3.selectAll(".c2p2.reservoirs")
+            .style("fill", "#6079a3")
+            .style("stroke", "#6079a3")
+            .lower()
         d3.selectAll(".c2p2.delaware_bay")
             .style("fill", "#6079a3")
             .lower()
@@ -1259,6 +1380,16 @@
 
     // *********************************************************************//
     function mousemoveRect_c2p2(data, tooltip, position) {
+
+        // var x = (d3.event.clientX - (window.innerWidth / 2)) - 40
+        // var y = d3.event.clientY
+        
+        // d3.select(".c2p2.tooltip.matrix")
+        //     .html(data[timestep_c2p2])
+        //     .style("left", x + "px")
+        //     .style("top", y + "px");
+
+
         var xoffset = position[0]+10
         var yoffset = position[1]-5
         tooltip
@@ -1274,13 +1405,16 @@
             .style("fill", "None")
             .style("stroke", "None")
 
-        // tooltip
-        //     .style("opacity", 1);
+        tooltip
+            .style("opacity", 1);
         d3.selectAll(".c2p2.matrixTemporalRect")
             .style("opacity", 0.8)
             .style("stroke-width", 2);
         d3.selectAll(".c2p2.matrixTemporalRect.time" + data[timestep_c2p2])
             .style("opacity", 0)
+        d3.selectAll(".c2p2.reservoirs")
+            .style("fill", "#172c4f")
+            .style("stroke", "#172c4f")
         d3.selectAll(".c2p2.delaware_bay")
             .style("fill", "#172c4f")
         d3.selectAll(".c2p2.river_segments")
@@ -1299,8 +1433,8 @@
             .style("stroke", "#000000")
             .style("stroke-width", 2)
 
-        // tooltip
-        //     .style("opacity", 0)
+        tooltip
+            .style("opacity", 0)
         d3.selectAll(".c2p2.matrixTemporalRect") 
             .style("stroke", "#000000") // #ffffff
             .style("fill", "#000000") // #ffffff
@@ -1312,6 +1446,10 @@
         d3.selectAll(".c2p2.river_segments." + timestep_c2p2 + data[timestep_c2p2])
             .style("stroke", "#6079a3")
             .attr("opacity", 1)
+            .lower()
+        d3.selectAll(".c2p2.reservoirs")
+            .style("fill", "#6079a3")
+            .style("stroke", "#6079a3")
             .lower()
         d3.selectAll(".c2p2.delaware_bay")
             .style("fill", "#6079a3")
@@ -1327,7 +1465,7 @@
     // *********************************************************************//
 
     function setSegments_c2p3(segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
-        
+
         // add basin_buffered basin to map
         var drb_basin_buffered = map.append("path")
             .datum(basin_buffered)
@@ -1371,16 +1509,16 @@
             })
             .style("stroke-width", 1)
 
-        // set tooltip
-        var tooltip = d3.select("#DRB_map_c2p3")
-            .append("div")
-            .style("opacity", 0)
-            .attr("class", "c2p3 tooltip")
-            // .style("background-color", "white")
-            // .style("border", "solid")
-            // .style("border-width", "2px")
-            // .style("border-radius", "5px")
-            .style("padding", "5px")
+        // // set tooltip
+        // var tooltip = d3.select("#DRB_map_c2p3")
+        //     .append("div")
+        //     .style("opacity", 0)
+        //     .attr("class", "c2p3 tooltip")
+        //     // .style("background-color", "white")
+        //     // .style("border", "solid")
+        //     // .style("border-width", "2px")
+        //     // .style("border-radius", "5px")
+        //     .style("padding", "5px")
 
 
         // add drb segments to map
@@ -1419,14 +1557,14 @@
             })
             .style("fill", "None")
             .on("mouseover", function(d) {
-                mouseoverSeg_c2p3(d, tooltip);
+                mouseoverSeg_c2p3(d); // tooltip
             })
             .on("mousemove", function(d) {
                 position = d3.mouse(this);
-                mousemoveSeg_c2p3(d, tooltip, position);
+                mousemoveSeg_c2p3(d, position); // tooltip
             })
             .on("mouseout", function(d) {
-                mouseoutSeg_c2p3(d, tooltip);
+                mouseoutSeg_c2p3(d); // tooltip
             });
         
 
@@ -1443,6 +1581,8 @@
         // append the svg object ot the body of the page
         var svgMatrix = d3.select("#matrixChart_c2p3")
             .append("svg")
+                // .attr("viewBox", [0, 0, (matrix_width_c2p3 + matrix_margin.left + matrix_margin.right), 
+                //                         (matrix_height_c2p3 + matrix_margin.top + matrix_margin.bottom)].join(' '))
                 .attr("width", matrix_width_c2p3 + matrix_margin.left + matrix_margin.right)
                 .attr("height", matrix_height_c2p3 + matrix_margin.top + matrix_margin.bottom)
                 .attr("class", "c2p3 matrix")
@@ -1704,27 +1844,28 @@
     };
 
     // *********************************************************************//
-    function mousemoveSeg_c2p3(data, tooltip, position) {
+    function mousemoveSeg_c2p3(data, position) {
 
         var num_obs = data.properties.year_count['2019'];
-        tooltip
-            .html(d3.format(',')(num_obs) + "<p>obs.")
-            // .html("Segment " + data.seg_id_nat)
-            .style("left", position[0]+35 + "px")
-            .style("top", position[1]-25 + "px")
-            .style("text-align", "left"); /* position[1]+110 */
+        // tooltip
+        //     .html(d3.format(',')(num_obs) + "<p>obs.")
+        //     // .html("Segment " + data.seg_id_nat)
+        //     .style("left", position[0]+35 + "px")
+        //     .style("top", position[1]-25 + "px")
+        //     .style("text-align", "left"); /* position[1]+110 */
 
     };
 
     // *********************************************************************//
-    function mouseoverSeg_c2p3(data, tooltip) {
+    function mouseoverSeg_c2p3(data) {
 
         d3.selectAll(".c2p3.matrixTemporalRect")
             .style("fill", "None")
             .style("stroke", "None")
 
-        tooltip
-            .style("opacity", 1);
+        // // TOOLTIP TURNED OFF ABOVE WHEN SEGS CREATED
+        // tooltip
+        //     .style("opacity", 1);
         d3.selectAll(".c2p3.matrixSpatialRect")
             .style("opacity", 0.7)
             .style("stroke-width", 1);
@@ -1759,10 +1900,10 @@
                     return "#ffffff"; //red
                 }
             })
-            .raise();
+            .raise()
         // d3.selectAll(".c2p3.cell.segment" + data.seg_id_nat)
         //     .raise()
-        d3.selectAll("c2p3.reservoirs")
+        d3.selectAll(".c2p3.reservoirs")
             .style("fill", "#172c4f")
             .style("stroke", "#172c4f")
         d3.selectAll(".c2p3.delaware_bay")
@@ -1778,15 +1919,15 @@
     };
 
     // *********************************************************************//
-    function mouseoutSeg_c2p3(data, tooltip) {
+    function mouseoutSeg_c2p3(data) {
 
         d3.selectAll(".c2p3.matrixTemporalRect")
             .style("fill", "#000000")
             .style("stroke", "#000000")
             .style("stroke-width", 2) 
 
-        tooltip
-            .style("opacity", 0)
+        // tooltip
+        //     .style("opacity", 0)
         d3.selectAll(".c2p3.matrixSpatialRect") /* .matrixRect.seg" + data.seg_id_nat */
             .style("stroke", "None")    
             .style("stroke", "#000000") // "#ffffff"
@@ -1840,11 +1981,8 @@
         tooltip
             .style("opacity", 1)
         d3.selectAll(".c2p3.matrixTemporalRect")
-            .style("opacity", 0.8)
-            // .style("stroke", "rgba(0, 0, 0, 0)")
+            .style("opacity", 0.85)
             .style("stroke-width", 0.6)
-        // d3.selectAll(".c2p3.cell.timestep" + data[timestep_c2p3])
-        //     .raise()
         d3.selectAll(".c2p3.matrixTemporalRect.time" + data[timestep_c2p3])
             .style("opacity", 0)
             // .raise()
