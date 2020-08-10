@@ -16,9 +16,15 @@ body {
   color: #EBE72C;
 }
 
+#intro_row {
+  margin-top: 3vh;
+  margin-bottom: 3vh;
+  /* height: 90vh; */
+}
+
 .row {
-  margin-top: 5vh;
-  margin-bottom: 5vh;
+  margin-top: 9vh;
+  margin-bottom: 9vh;
   /* height: 90vh; */
 }
 
@@ -26,6 +32,10 @@ body {
   margin-top: 50vh;
   margin-bottom: 50vh;
   /* height: 100vh; */
+}
+
+#filter_row {
+  height: 1vh;
 }
 
 #narrative_text {
