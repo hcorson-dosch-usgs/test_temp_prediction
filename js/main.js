@@ -19,12 +19,12 @@
 
 
     // margins, width and height for matrix charts
-    var matrix_margin = {top: 5, right: 15, bottom: 15, left: 35},
+    var matrix_margin = {top: 15, right: 15, bottom: 15, left: 35},
         matrix_width_c2p2 = 700 - matrix_margin.left - matrix_margin.right, //500
         matrix_width_c2p3 = 700 - matrix_margin.left - matrix_margin.right,
-        matrix_height_c2p2 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom,
-        matrix_height_c2p3 = window.innerHeight*0.93 - matrix_margin.top - matrix_margin.bottom;
-
+        matrix_height_c2p2 = window.innerHeight*0.95 - matrix_margin.top - matrix_margin.bottom,
+        matrix_height_c2p3 = window.innerHeight*0.95 - matrix_margin.top - matrix_margin.bottom;
+    
     // *********************************************************************//
     function setPanels(){
         // // CHAPTER 1 MAP
@@ -83,13 +83,13 @@
         // // CHAPTER 2 MAPS
         // set universal map frame dimensions for Ch 2 maps
         var map_width = 600,
-            map_height = window.innerHeight*0.86,
+            map_height = window.innerHeight*0.84,
             map_margin = {top: 5, right: 5, bottom: 5, left: 5};
 
         //create Albers equal area conic projection centered on DRB for ch2 maps
         var map_projection = d3.geoAlbers()
-            .center([0, 40.558894445])
-            .rotate([76.1, 0, 0]) //75.363333335
+            .center([0, 40.658894445])
+            .rotate([74.6, 0, 0]) //75.363333335 centered, 76.2 far right, 74.6 far left
             .parallels([39.9352537033, 41.1825351867])
             .scale(map_height*15)
             .translate([map_width / 2, map_height / 2]);
@@ -102,7 +102,7 @@
             .orient(d3.geoScaleBottom)
             .projection(map_projection)
             .size([map_width, map_height])
-            .left(.15)
+            .left(.07) // .15 centered, .45 far right
             .top(.94)
             .units(d3.geoScaleKilometers)
             .distance(50)
@@ -115,7 +115,7 @@
             .orient(d3.geoScaleTop)
             .projection(map_projection)
             .size([map_width, map_height])
-            .left(.15)
+            .left(.07) // .15 centered, .45 far right
             .top(.95)
             .units(d3.geoScaleMiles)
             .distance(25)
@@ -177,7 +177,8 @@
                         d3.json("data/Segments_subset_4per_smooth_10miBuffer_diss.json"),
                         d3.json("data/cb_states_16per.json"),
                         d3.json("data/Segments_subset_1per_smooth.json"),
-                        d3.json("data/cb_states_16per_merged.json")
+                        d3.json("data/cb_states_16per_merged.json"),
+                        d3.json("data/narrative_rectangle.json")
                     ];
         Promise.all(promises).then(callback);
 
@@ -199,6 +200,7 @@
             json_states = data[12];
             json_segs_small = data[13];
             json_states_merged = data[14];
+            json_narr_rect = data[15];
 
             // translate topojsons
             var segments = json_segments.features; /* topojson.feature(json_segments, json_segments.objects.Segments_subset_4per_smooth).features */
@@ -210,14 +212,11 @@
             var states = topojson.feature(json_states, json_states.objects.cb_states);
             var segs_small = topojson.feature(json_segs_small, json_segs_small.objects.Segments_subset_1per_smooth).features;
             var states_merged = topojson.feature(json_states_merged, json_states_merged.objects.cb_states_16per_merged);
+            var narr_rect = topojson.feature(json_narr_rect, json_narr_rect.objects.narrative_rectangle);
 
             // join csv data to geojson segments
             segments = joinData(segments, csv_flow);
             segs_small = joinData(segs_small, csv_flow);
-
-            // check the results
-            // console.log('segments:')
-            // console.log(segments);
 
             // stroke width scale
             var widthScale_c1p1 = makeWidthScale_c1p1(csv_flow);
@@ -240,14 +239,14 @@
 
             // // Set up Ch 2 panel 2 - 
             // add DRB segments to the panel 2 map
-            setSegments_c2p2(segments, stations, bay, reservoirs, dams, basin_buffered, map_c2p2, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
+            setSegments_c2p2(map_width, map_height, segments, stations, bay, reservoirs, dams, basin_buffered, map_c2p2, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
             // create panel 2 matrix
             createMatrix_c2p2(csv_matrix_annual, csv_annual_count, segments, timestep_c2p2);
 
 
             // // Set up Ch 2 panel 3 - 
             // // add DRB segments to the panel 3 map
-            setSegments_c2p3(segments, stations, bay, reservoirs, dams, basin_buffered, map_c2p3, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
+            setSegments_c2p3(map_width, map_height, segments, stations, bay, reservoirs, dams, basin_buffered, map_c2p3, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
             // // create panel 3 matrix
             createMatrix_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments, timestep_c2p3);
 
@@ -944,7 +943,7 @@
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
-    function setSegments_c2p2(segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
+    function setSegments_c2p2(map_width, map_height, segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
 
         // find root svg element
         var svg_map_c2p2 = document.querySelector('.map_c2p2');
@@ -972,7 +971,28 @@
         // add tooltip to map svg
         var tooltip = map.append("text")
             .attr("class", "c2p2 tooltip map")
-                 
+
+        // add c2p2 narrative text
+        var narrative = map.append("foreignObject")
+            .attr("class", "c2p2 narrative")
+            .attr("text-align", "left")
+            .attr("x", map_width*0.6)
+            .attr("y", 25)
+            .attr("width", map_width*0.4)
+            .attr("height", map_height)
+            .append("xhtml:body")
+                .attr("class", "c2p2 narrative")
+                .html('<p>But we cannot measure water temperature everywhere at all times.\
+                Therefore, observed temperature data has gaps in space and time. In the matrix chart,\
+                below, the columns represent years, and each row represents a stream reach within the\
+                 basin. If every stream reach had at least <b><i>one measurement of water temperature</i></b>\
+                  at a representative monitoring station <b><i>each year</i></b>, the rectangular chart \
+                  at right would be entirely <span id="c2p2_matrix_min"><b>blue</b></span>. If every reach \
+                  had at least <b><i>one measurement of water temperature</i></b> on <b><i>each day of each \
+                  year</i></b>, the rectangular chart at right would be entirely <span id="c2p2_matrix_max"><b>\
+                  yellow</b></span>. Current monitoring efforts cannot reach either of these baselines. Black \
+                  sections in the chart below therefore indicate where we are "in the dark" about stream \
+                  temperature </p>')
 
         // add drb segments to map BACKGROUND
         var drb_segments = map.selectAll(".river_segments")
@@ -1195,9 +1215,6 @@
             // .attr("rx", 1)
             // .attr("ry", 1 )
             .attr("width", x.bandwidth())
-            .attr("x", function(d) {
-               return x(d[timestep_c2p2])
-            })
             .attr("height", y.bandwidth())
             .attr("class", function(d) { 
                 return 'c2p2 cell segment' + d.seg_id_nat + ' timestep' + d[timestep_c2p2]
@@ -1228,7 +1245,6 @@
             .attr("class", "c2p2 matrixAxis top")
             .call(d3.axisTop(x).tickSize(0))
             // .select(".domain").remove()
-
         // draw y axes
         transformedMatrix.append("g")
             .style("font-size", 0)
@@ -1595,7 +1611,7 @@
     // *********************************************************************//
     // *********************************************************************//
 
-    function setSegments_c2p3(segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
+    function setSegments_c2p3(map_width, map_height, segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
 
         // find root svg element
         var svg_map_c2p3 = document.querySelector('.map_c2p3');
@@ -1623,6 +1639,18 @@
         // add tooltip to map svg
         var tooltip = map.append("text")
             .attr("class", "c2p3 tooltip map")
+
+        // add c2p3 narrative text
+        var narrative = map.append("foreignObject")
+        .attr("class", "c2p3 narrative")
+        .attr("text-align", "left")
+        .attr("x", map_width*0.6)
+        .attr("y", 25)
+        .attr("width", map_width*0.4)
+        .attr("height", map_height)
+        .append("xhtml:body")
+            .attr("class", "c2p3 narrative")
+            .html('<p>If we look at daily temperature observations in 2019, we can see...</p>')
 
         // add drb segments to map BACKGROUND
         var drb_segments = map.selectAll(".river_segments")
@@ -1835,9 +1863,6 @@
             // .attr("rx", 1)
             // .attr("ry", 1 )
             .attr("width", x.bandwidth())
-            .attr("x", function(d) {
-               return x(d[timestep_c2p3])
-            })
             .attr("height", y.bandwidth())
             .attr("class", function(d) { 
                 return 'c2p3 cell segment' + d.seg_id_nat + ' timestep' + d[timestep_c2p3]
