@@ -1,6 +1,6 @@
 (function(){
     
-    // psuedo-global variables
+    // // psuedo-global variables
 
     // variables for data join
     var flowArray = ['avg_ann_flow']
@@ -8,25 +8,25 @@
     // begin script when window loads
     window.onload = setPanels();
 
-    // timestep variables
+    // timestep variables for linked networks and matrices
     var timestep_c2p2 = 'year'
     var timestep_c2p3 = 'date'
 
-    // margins, width and height for bar charts
+    // margins, width and height for bar chart
     var chart_margin = {top: 30, right: 60, bottom: 45, left: 5},
         chart_width = 500 - chart_margin.left - chart_margin.right, //500
         chart_height = window.innerHeight*0.30 - chart_margin.top - chart_margin.bottom;
-
 
     // margins, width and height for matrix charts
     var matrix_margin = {top: 15, right: 15, bottom: 15, left: 35},
         matrix_width_c2p2 = 700 - matrix_margin.left - matrix_margin.right, //500
         matrix_width_c2p3 = 700 - matrix_margin.left - matrix_margin.right,
-        matrix_height_c2p2 = window.innerHeight*0.85 - matrix_margin.top - matrix_margin.bottom,
-        matrix_height_c2p3 = window.innerHeight*0.85 - matrix_margin.top - matrix_margin.bottom;
+        matrix_height_c2p2 = window.innerHeight*0.9 - matrix_margin.top - matrix_margin.bottom,
+        matrix_height_c2p3 = window.innerHeight*0.9 - matrix_margin.top - matrix_margin.bottom;
     
     // *********************************************************************//
     function setPanels(){
+
         // // CHAPTER 1 MAP
         var map_width_c1p1 = 600,
             map_height_c1p1 = window.innerHeight*0.8,
@@ -79,14 +79,25 @@
             // .attr("width", map_width_c1p1)
             // .attr("height", map_height_c1p1);
 
+        // // CHAPTER 2 BAR CHART
+        // write function to process data for stacked bar chart in chapter 2 panel 1
+        function type(d, i, columns) {
+            for (i=1, t=0; i < columns.length; ++i) 
+                // for each row, which is d, cycle through the columns
+                t += d[columns[i]] = +d[columns[i]];
+                // create a new column in the data titled "total"
+                d.total = t;
+                return d;
+            
+        }
 
         // // CHAPTER 2 MAPS
         // set universal map frame dimensions for Ch 2 panel maps
         var map_width = 600,
-            map_height = window.innerHeight*0.7,
+            map_height = window.innerHeight*0.8,
             map_margin = {top: 5, right: 5, bottom: 5, left: 5};
 
-        //create Albers equal area conic projection centered on DRB for ch2 panel 2 and 3 maps
+        //create Albers equal area conic projection centered on DRB for ch2 panel 1 map
         var map_projection_c2p1 = d3.geoAlbers()
             .center([0, 40.658894445])
             .rotate([75.533333335, 0, 0]) //75.363333335 centered, 76.2 far right, 74.6 far left
@@ -97,7 +108,7 @@
         var map_path_c2p1 = d3.geoPath()
             .projection(map_projection_c2p1);     
             
-        // create scale bar for ch 2 panel 2 and 3 maps
+        // create scale bar for ch 2 panel 1 map
         const scaleBarTop_c2p1 = d3.geoScaleBar()
             .orient(d3.geoScaleBottom)
             .projection(map_projection_c2p1)
@@ -140,7 +151,7 @@
             .orient(d3.geoScaleBottom)
             .projection(map_projection)
             .size([map_width, map_height])
-            .left(.13) // .15 centered, .45 far right
+            .left(.1) // .15 centered, .45 far right
             .top(.94)
             .units(d3.geoScaleKilometers)
             .distance(50)
@@ -153,7 +164,7 @@
             .orient(d3.geoScaleTop)
             .projection(map_projection)
             .size([map_width, map_height])
-            .left(.13) // .15 centered, .45 far right
+            .left(.1) // .15 centered, .45 far right
             .top(.95)
             .units(d3.geoScaleMiles)
             .distance(25)
@@ -180,7 +191,7 @@
             // .attr("width", map_width)
             // .attr("height", map_height);
 
-        // create new svg container for map_c2p3
+        // create new svg container for the ch 2 panel 3 map
         var map_c2p3 = d3.select("#DRB_map_c2p3")
             .append("svg")
             .attr("class", "map_c2p3")
@@ -188,25 +199,14 @@
                                     (map_height + map_margin.top + map_margin.bottom)].join(' '));
             // .attr("width", map_width)
             // .attr("height", map_height);
-
-        // write function to process data for stacked bar chart
-        function type(d, i, columns) {
-            for (i=1, t=0; i < columns.length; ++i) 
-                // for each row, which is d, cycle through the columns
-                t += d[columns[i]] = +d[columns[i]];
-                // create a new column in the data titled "total"
-                d.total = t;
-                return d;
-            
-        }
-        
-        // parallelize asynchronous data loading // observed_reach_station_coords.json
+       
+        // parallelize asynchronous data loading // 
         var promises = [d3.csv("data/segment_maflow.csv"),
                         d3.csv("data/matrix_annual_obs.csv"), 
                         d3.csv("data/obs_annual_count.csv"),
                         d3.csv("data/matrix_daily_2019_obs.csv"),
                         d3.csv("data/obs_daily_count_2019.csv"),
-                        d3.csv("data/agency_annual_count.csv", type),
+                        d3.csv("data/agency_annual_count.csv", type), // process data for stacked bar chart as it is loaded
                         d3.json("data/segment_geojson.json"),
                         d3.json("data/observed_site_locations.json"), 
                         d3.json("data/NHDWaterbody_DelawareBay_pt6per_smooth.json"),
@@ -215,8 +215,7 @@
                         d3.json("data/Segments_subset_4per_smooth_10miBuffer_diss.json"),
                         d3.json("data/cb_states_16per.json"),
                         d3.json("data/Segments_subset_1per_smooth.json"),
-                        d3.json("data/cb_states_16per_merged.json"),
-                        d3.json("data/narrative_rectangle.json")
+                        d3.json("data/cb_states_16per_merged.json")
                     ];
         Promise.all(promises).then(callback);
 
@@ -238,7 +237,6 @@
             json_states = data[12];
             json_segs_small = data[13];
             json_states_merged = data[14];
-            json_narr_rect = data[15];
 
             // translate topojsons
             var segments = json_segments.features; /* topojson.feature(json_segments, json_segments.objects.Segments_subset_4per_smooth).features */
@@ -250,49 +248,47 @@
             var states = topojson.feature(json_states, json_states.objects.cb_states);
             var segs_small = topojson.feature(json_segs_small, json_segs_small.objects.Segments_subset_1per_smooth).features;
             var states_merged = topojson.feature(json_states_merged, json_states_merged.objects.cb_states_16per_merged);
-            var narr_rect = topojson.feature(json_narr_rect, json_narr_rect.objects.narrative_rectangle);
 
-            // join csv data to geojson segments
-            segments = joinData(segments, csv_flow);
+            // // join csv flow data to geojson segments
+            // ch 1 p 1 map segments
             segs_small = joinData(segs_small, csv_flow);
+            // ch 2 map segments
+            segments = joinData(segments, csv_flow);
+            
 
-            // stroke width scale
+            // // set stroke width scale
+            // for ch 1 p 1 map segments
             var widthScale_c1p1 = makeWidthScale_c1p1(csv_flow);
-            var widthScale = makeWidthScale(csv_flow);
-
-            // segment stroke color scale
-            var segmentColorScale = makeSegmentColorScale(segments);
-
-            // station observation count color scale
-            // var stationColorScale = makeStationColorScale(stations);
+            // for ch 2 map segments
+            var widthScale_c2 = makeWidthScale_c2(csv_flow);
 
             // // Set up Ch 1 panel 1 -
-            setSegments_c1p1(states, states_merged, segs_small, bay, map_c1p1, map_path_c1p1, scaleBarTop_c1p1, scaleBarBottom_c1p1, widthScale_c1p1);
+            setMap_c1p1(states, states_merged, segs_small, bay, map_c1p1, map_path_c1p1, scaleBarTop_c1p1, scaleBarBottom_c1p1, widthScale_c1p1);
 
             // // Set up Ch 2 panel 1 -
             // add DRB segments to the panel 1 map
-            setSegments_c2p1(segments, stations, bay, map_c2p1, map_path_c2p1, scaleBarTop_c2p1, scaleBarBottom_c2p1, widthScale, segmentColorScale);
+            setMap_c2p1(segments, stations, bay, map_c2p1, map_path_c2p1, scaleBarTop_c2p1, scaleBarBottom_c2p1, widthScale_c2);
             // add bar chart to panel 1
             setBarChart_c2p1(csv_agency_count);
 
             // // Set up Ch 2 panel 2 - 
             // add DRB segments to the panel 2 map
-            setSegments_c2p2(map_width, map_height, segments, stations, bay, reservoirs, dams, basin_buffered, map_c2p2, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
+            setMap_c2p2(map_width, map_height, segments, bay, reservoirs, basin_buffered, map_c2p2, map_path, scaleBarTop, scaleBarBottom, widthScale_c2);
             // create panel 2 matrix
             createMatrix_c2p2(csv_matrix_annual, csv_annual_count, segments, timestep_c2p2);
 
-
             // // Set up Ch 2 panel 3 - 
             // // add DRB segments to the panel 3 map
-            setSegments_c2p3(map_width, map_height, segments, stations, bay, reservoirs, dams, basin_buffered, map_c2p3, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale);
+            setMap_c2p3(map_width, map_height, segments, bay, reservoirs, basin_buffered, map_c2p3, map_path, scaleBarTop, scaleBarBottom, widthScale_c2);
             // // create panel 3 matrix
             createMatrix_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments, timestep_c2p3);
-
 
         };
     };
 
     // *********************************************************************//
+    // join flow data to segment spatial data
+
     function joinData(segments, csv_flow){
         // loop through csv to assign each set of csv attribute values to a geojson polyline
         for (var i=0; i<csv_flow.length; i++){
@@ -328,6 +324,9 @@
     };
 
     // *********************************************************************//
+    // make width scale to scale segment strokes by streamflow for Chapter 1 p 1 map
+    // graduated and linear scale options - currently using graduated as prefer look
+
     function makeWidthScale_c1p1(data){
         
         // // graduated scale
@@ -387,7 +386,10 @@
     };
     
     // *********************************************************************//
-    function makeWidthScale(data){
+    // make width scale to scale segment strokes by streamflow for Chapter 2 maps
+    // graduated and linear scale options - currently using graduated as prefer look
+
+    function makeWidthScale_c2(data){
       
         // // graduated scale
         // set width classes
@@ -451,101 +453,13 @@
     };
 
     // *********************************************************************//
-    function makeSegmentColorScale(segments){
-        // // graduated scale
-        // // set color classes
-        // var colorClasses = [
-        //     '#f1eef6',
-        //     '#bdc9e1',
-        //     '#74a9cf',
-        //     '#2b8cbe',
-        //     '#045a8d'
-        // ];
-
-
-
-        // // graduated scale
-        // create width scale generator for natural breaks classification
-        // var colorScale = d3.scaleThreshold()
-        //     .range(colorClasses);
-
-        // build array of all values of the total count attribute
-        var domainArrayColor = [];
-        for (var i=0; i<segments.length; i++){
-            var value = parseFloat(segments[i]['properties']['total_count']);
-            if (value) {
-                domainArrayColor.push(value);
-            } else {
-                continue
-            } 
-        };
-
-        // // sequential color scale
-        var obsMax = Math.round(Math.max(...domainArrayColor));
-
-        // console.log(domainArrayColor)
-
-        // // sequential color scale
-        var colorScale = d3.scaleSequential()
-            .interpolator(d3.interpolateOranges)
-            .domain([0,obsMax])
-
-        // // graduated scale
-        // cluster data using ckmeans clustering algoritm to create natural breaks
-        // var clusters = ss.ckmeans(domainArrayColor, 5);
-        // console.log(clusters);
-
-        // // // graduated scale
-        // // reset domain array to cluster minimumns
-        // domainArrayColor = clusters.map(function(d){
-        //     return d3.min(d);
-        // });
-
-        // // // graduated scale
-        // // remove first value from domain array to create class breakpoints
-        // domainArrayColor.shift();
-
-        // // // graduated scale
-        // // assign array of last 4 cluster minimums as domain
-        // colorScale.domain(domainArrayColor);
-
-        // 
-        return colorScale;
-    };
-
-    // *********************************************************************//
-    function makeStationColorScale(stations){
-        // find max value of data array
-        // build array of all counts
-        var domainArrayY = [];
-            for (var i=0; i<stations.length; i++){
-                var val = parseFloat(stations[i]['properties']['total_count']);
-                domainArrayY.push(val);
-            };
-    
-        console.log(domainArrayY)
-
-        // compute max value of array
-        dataMax = Math.round(Math.max(...domainArrayY));
-        // console.log(dataMax);
-
-        // create a color scale
-        // color scale
-        var myColor = d3.scaleSequential()
-            .interpolator(d3.interpolatePlasma) /* interpolatePlasma */
-            // .domain([temporalCountMax,1]) // if INVERTING color scale
-            .domain([0, dataMax]) // if NOT INVERTING color scale
-
-        return(myColor)
-
-    };
-
-    // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
 
-   function setSegments_c1p1(states, states_merged, segs_small, bay, map_c1p1, map_path_c1p1, scaleBarTop_c1p1, scaleBarBottom_c1p1, widthScale) {
+    // Chapter 1 Panel 1 components
+
+    function setMap_c1p1(states, states_merged, segs_small, bay, map_c1p1, map_path_c1p1, scaleBarTop_c1p1, scaleBarBottom_c1p1, widthScale_c1p1) {
 
         // add merged surrounding states to map
         var states_merged = map_c1p1.append("path")
@@ -586,11 +500,12 @@
             .style("stroke-width", function(d){
                 var value = d.properties['avg_ann_flow'];
                 if (value){
-                    return widthScale(value);
+                    return widthScale_c1p1(value);
                 } else {
                     return "#ccc";
                 }
             })
+            // set fill to none
             .style("fill", "None")
 
         // add scale bar
@@ -603,30 +518,17 @@
     // *********************************************************************//
     // *********************************************************************//
     // *********************************************************************//
-    function setSegments_c2p1(segments, stations, bay, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
+
+    // Chapter 2 panel 1 components
+
+    // add chapter 2 panel 1 map
+    function setMap_c2p1(segments, stations, bay, map, map_path, scaleBarTop, scaleBarBottom, widthScale_c2){
                   
         // add delaware bay to map
         var drb_bay = map.append("path")
             .datum(bay)
             .attr("class", "c2p1 delaware_bay")
             .attr("d", map_path)
-            // .on("mouseover", function(d) {
-            //     mouseover_c2p1(d);
-            // })
-            // .on("mouseout", function(d) {
-            //     mouseout_c2p1(d);
-            // });
-
-        // // set tooltip
-        // var tooltip = d3.select("#DRB_map_c2p1")
-        //     .append("div")
-        //     .style("opacity", 0)
-        //     .attr("class", "c2p1 tooltip")
-        //     // .style("background-color", "white")
-        //     // .style("border", "solid")
-        //     // .style("border-width", "2px")
-        //     // .style("border-radius", "5px")
-        //     .style("padding", "5px")
 
 
         // add drb segments to map
@@ -639,37 +541,21 @@
             .append("path")
             // assign class for styling
             .attr("class", function(d){
-                var seg_class = 'c2p1 river_segments seg'
-                seg_class += d.seg_id_nat
-                // for (key in d.properties.year_count) {
-                //     if (d.properties.year_count[key]) {
-                //         seg_class += " " + timestep_c2p1 + key
-                //     }
-                // }
-                return seg_class
-
-                // return "c2p1 river_segments seg" + d.seg_id_nat; /* d.properties.seg_id_nat */
+                return 'c2p1 river_segments seg' + d.seg_id_nat
             })
-            // add filter
-            // .attr("filter", "url(#shadow1)")
             // project segments
             .attr("d", map_path)
             // add stroke width based on widthScale function
             .style("stroke-width", function(d){
                 var value = d.properties['avg_ann_flow'];
                 if (value){
-                    return widthScale(value);
+                    return widthScale_c2(value);
                 } else {
                     return "#ccc";
                 }
             })
+            // set fill to none
             .style("fill", "None")
-            // .on("mouseover", function(d) {
-            //     mouseover_c2p1(d);
-            // })
-            // .on("mouseout", function(d) {
-            //     mouseout_c2p1(d);
-            // });
 
       
         // add drb stations to map
@@ -686,7 +572,7 @@
             .attr("class", function(d){
                 return "c2p2 obs_stations station" + d.id
             })
-            .style("fill", "#ffffff")
+            // assign fill color based on agency
             .style("fill", function(d){
                 if (d.properties.site_agency == 'USGS'){
                     return "#edb932"  
@@ -694,20 +580,11 @@
                     return "#eb4444"
                 }
             })
+            // assign stroke in background color
             .style("stroke", "#000000")
-            // .style("stroke", "#ffffff")
             .style("stroke-width", 0.4)
-            .style("opacity", 0.7)
-            // .on("mouseover", function(d) {
-            //     mouseover_c2p1(d, tooltip);
-            // })
-            // .on("mousemove", function(d) {
-            //     position = d3.mouse(this);
-            //     mousemoveSeg_c2p1(d, tooltip, position);
-            // })
-            // .on("mouseout", function(d) {
-            //     mouseout_c2p1(d, tooltip);
-            // });
+            // assign opacity
+            .style("opacity", 1)
 
         // add scale bar
         map.append("g").call(scaleBarTop)
@@ -716,21 +593,10 @@
     };
 
     // *********************************************************************//
-    // add chart
+    // add Ch 2 panel 1 stacked bar chart
     function setBarChart_c2p1(csv_agency_count){
 
-        // function type(d, i, columns) {
-        //     for (i=1, t=0; i < columns.length; ++i) 
-        //         // for each row, which is d, cycle through the columns
-        //         t += d[columns[i]] = +d[columns[i]];
-        //         // create a new column in the data titled "total"
-        //         d.total = t;
-        //         return d;
-            
-        // }
-
-
-
+        // append svg to div
         var svgChart = d3.select("#barChart_c2p1")
             .append("svg")
                 .attr("viewBox", [0, 0, (chart_width +  chart_margin.right + chart_margin.left), 
@@ -757,10 +623,10 @@
         var z = d3.scaleOrdinal()
             .range(["#edb932", "#eb4444"]);
         
-        // stack to create an array for each of the series in tehdata
+        // stack to create an array for each of the series in the data
         var stack = d3.stack();
 
-        // load data
+        // load processed data
         data = csv_agency_count
 
         // set x domain - create an array of the two site agency categories
@@ -776,7 +642,7 @@
         g.selectAll(".series")
             // keys for the stack are all but the first column
             .data(stack.keys(data.columns.slice(1))(data))
-            // each agency series is given it's own g
+            // each agency series is given its own g
             .enter().append("g")
                 .attr("class", "series")
                 // keys passed to the z domain to be assigned a color
@@ -784,6 +650,7 @@
             .selectAll("rect")
                 .data(function(d) { return d;})
                 .enter().append("rect")
+                    // set x attribute based on year
                     .attr("x", function(d) { return x(d.data.year); })
                     // from the slice method d is a pair of coordinates, the upper and lower
                     // bounds of the area to be displayed. This sets the upper y value
@@ -800,7 +667,7 @@
             .call(d3.axisBottom(x).tickValues(['1980', '1985', '1990', '1995', '2000', '2005', '2010', '2015', '2019' ]).tickSize(0))
             .select(".domain").remove()
 
-
+        // place and rotate x axis labels
         g.selectAll('text')
             .attr("y", 5)
             .attr("x", -28)
@@ -809,207 +676,93 @@
             .style("text-anchor", "start")
 
 
-        // place the y axis
+        // place the y axis and format tick labels
         g.append("g")
             .attr("class", "c2p1 chartAxis right")
+            // offset axis slightly to align closer to last bar
             .attr("transform", "translate(" + chart_width*0.96 + "," + 0 + ")")
+            // give ticks k number format and set their size to cover the width of the chart
             .call(d3.axisRight(y).ticks(10, "s").tickSize(-chart_width))
             .select(".domain").remove()
 
+        // place and rotate the y axis label
         svgChart.selectAll(".chartAxis.right")
             .append("text")
             .attr("y", 35)
+            // offset to (roughly) center on y axis
             .attr("x", -chart_height / 1.15)
             .attr("text-anchor", "starts")
             .attr("class", "c2p1 chartAxisText")
             .text("# of Measurements")
             .attr("transform", "rotate(-90)")
 
+        // set the tick mark lines to background color
         svgChart.selectAll(".tick line").attr("stroke", "#000000")
 
         //  make the legend
         var legend = g.selectAll(".legend")
+            // include all but the first column in the legend
             .data(data.columns.slice(1).reverse())
+            // append an item for each series
             .enter().append("g")
                 .attr("class", "c2p1 barChart legend")
                 .attr("transform", function(d, i) { 
                     return "translate(" + 0 + "," + i * 17 + ")"; 
                 })
-                // .style("font", "10px sans-serif")
-                // .style("fill", "#ffffff")
         
-        legend.append("rect")
-            .attr("x", 14)
-            .attr("width", 8)
-            .attr("height", 8)
-            .attr("fill", z);
+            // append a rectangle for each series
+            legend.append("rect")
+                .attr("x", 14)
+                .attr("width", 8)
+                .attr("height", 8)
+                // set color based on z attribute
+                .attr("fill", z);
 
-        legend.append("text")
-            .attr("x", 30)
-            .attr("y", 4)
-            .attr("dy", ".35em")
-            .attr("text-anchor", "start")
-            .text(function(d) { return d; });
+            // append a label for each rectangle
+            legend.append("text")
+                .attr("x", 30)
+                .attr("y", 4)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "start")
+                // set text as column name
+                .text(function(d) { return d; });    
 
+    }; 
 
+    // *********************************************************************//
+    // *********************************************************************//
+    // *********************************************************************//
+    // *********************************************************************//
 
-        // // append the svg object ot the body of the page
-        // var svgChart = d3.select("#barChart_c2p1")
-        // .append("svg")
-        //     .attr("width", chart_width + chart_margin.left + chart_margin.right)
-        //     .attr("height", chart_height + chart_margin.top + chart_margin.bottom)
-        //     .attr("class", "c2p1 barChart")
-        // .append("g")
-        //     .attr("class", "c2p1 transformedBarChart")
-        //     .attr("transform",
-        //         "translate(" + chart_margin.left + "," + chart_margin.top + ")");
+    // Add chapter 2 panel 2 components
 
-        // // find max value of data array
-        // // build array of all counts
-        // var domainArrayY = [];
-        //     for (var i=0; i<stations.length; i++){
-        //         var val = parseFloat(stations[i]['properties']['total_count']);
-        //         domainArrayY.push(val);
-        //     };
+    // Add Chapter 2 panel 2 map
+    function setMap_c2p2(map_width, map_height, segments, bay, reservoirs, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale_c2){
+
     
-        // console.log(domainArrayY)
-
-        // // compute max value of array
-        // dataMax = Math.round(Math.max(...domainArrayY));
-        // console.log(dataMax);
-
-        // // create a scale to size bars proportionaly to frame
-        // var yScale = d3.scaleLinear()
-        //     // set range of possible output values
-        //     .range([chart_height, 0])
-        //     // define range of input values
-        //     .domain([0, dataMax]);
-
-        // // define yAxis generator
-        // var yAxis = d3.axisLeft()
-        //     .scale(yScale)
-
-        // // set bars for each station
-        // var bars = svgChart.selectAll(".bar")
-        //     .data(stations)
-        //     .enter()
-        //     .append("rect")
-        //     .sort(function (a,b){
-        //         return b['properties']['total_count']-a['properties']['total_count'];
-        //     })
-        //     .attr("class", function(d){
-        //         return "bar " + d.properties.site_agency
-        //     })
-        //     .attr("width", chart_width/stations.length -1)
-        //     .attr("x", function(d, i){
-        //         return i * (chart_width/stations.length);
-        //     })
-        //     .attr("height", function(d,i){
-        //         return chart_height - yScale(parseFloat(d['properties']['total_count']))
-        //     })
-        //     .attr("y", function(d, i){
-        //         return yScale(parseFloat(d['properties']['total_count']))
-        //     })
-        //     .style("fill", function(d){
-        //         return stationColorScale(d['properties']['total_count'])
-        //     })
-
-        // // place axis
-        // svgChart.append("g")
-        //     .attr("class", "c2p1 chartAxis left")
-        //     .call(yAxis);
-
-        
-
-
-    };
-
-    // *********************************************************************//
-    // function mousemoveSeg_c2p1(data, tooltip, position) {
-    //     var num_obs = data.properties.total_count;
-    //     tooltip
-    //         .html(d3.format(',')(num_obs) + "<p>obs.")
-    //         // .html("Segment " + data.seg_id_nat)
-    //         .style("left", position[0]+35 + "px")
-    //         .style("top", position[1]-25 + "px")
-    //         .style("text-align", "left"); /* position[1]+110 */
-    // };
-
-    // *********************************************************************//
-    function mouseover_c2p1(data) {
-
-        d3.selectAll(".c2p1.delaware_bay")
-            .style("fill", "#0b1b36")
-        d3.selectAll(".c2p1.river_segments")
-            .style("stroke", "#0b1b36")
-        // d3.selectAll(".c2p1.river_segments.seg" + data.seg_id_nat)
-        //     .style("stroke", "#ffffff")
-        //     .attr("opacity", 1)
-        //     .attr("filter", "url(#shadow1)")
-        //     .raise()
-        d3.selectAll(".c2p2.obs_stations")
-            .style("opacity", 1)
-        // d3.selectAll(".c2p2.obs_stations.station" + data.seg_id_nat)
-        //     .style("fill", "red")
-        //     .style("opacity", 1)
-        //     .raise()
-            
-    };
-
-    // *********************************************************************//
-    function mouseout_c2p1(data) {
-
-        d3.selectAll(".c2p1.delaware_bay")
-            .style("fill", "#6079a3")
-        d3.selectAll(".c2p1.river_segments")
-            .style("stroke", "#6079a3")
-        d3.selectAll(".c2p2.obs_stations")
-            .style("opacity", 1)
-            // .style("fill", "#ffffff")
-        // d3.selectAll(".c2p2.obs_stations.station" + data.seg_id_nat)
-        //     .lower()  
-        // d3.selectAll(".c2p1.river_segments.seg" + data.seg_id_nat)
-        //     .style("stroke", "#6079a3")
-        //     .attr("opacity", 1)
-        //     .attr("filter","None")
-        //     .lower()
-
-
-    };    
-
-    // *********************************************************************//
-    // *********************************************************************//
-    // *********************************************************************//
-    // *********************************************************************//
-    function setSegments_c2p2(map_width, map_height, segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
-
+        // // Set up necessary elements for mousemove event within svg with viewBox
         // find root svg element
         var svg_map_c2p2 = document.querySelector('.map_c2p2');
-
         // create a SVGPoint for future math
         var pt_map_c2p2 = svg_map_c2p2.createSVGPoint();
-
-        //get point in global SVG space
+        // function to get point in global SVG space
         function cursorPoint_c2p2(evt){
             pt_map_c2p2.x = evt.clientX; pt_map_c2p2.y = evt.clientY;
             return pt_map_c2p2.matrixTransform(svg_map_c2p2.getScreenCTM().inverse()); 
         }
-
+        // create local variable to store point coordinates
         var loc_map_c2p2
-
         // reset coordinates when mousemoves over map svg
         svg_map_c2p2.addEventListener('mousemove', function(evt){
             loc_map_c2p2 = cursorPoint_c2p2(evt);
-            // console.log('x:')
-            // console.log(loc_map_c2p2.x)
-            // console.log('y:')
-            // console.log(loc_map_c2p2.y)
         }, false);
 
+        // // Add tooltip as text element appended to map svg, without coordinates
         // add tooltip to map svg
         var tooltip = map.append("text")
             .attr("class", "c2p2 tooltip map")
 
+        // // Add in narrative text as text element appended to map svg
         // add c2p2 narrative text
         var narrative = map.append("foreignObject")
             .attr("class", "c2p2 narrative")
@@ -1034,8 +787,10 @@
                   temperature </p><p id="tip_text"><i>Hover over the stream network, left, and the matrix chart, right, to\
                   explore the availability of data in space in time.</i></p>')
 
-        // add drb segments to map BACKGROUND
-        var drb_segments = map.selectAll(".river_segments")
+        
+        // // Build Map
+        // add drb segments to map BACKGROUND - for selection only
+        var drb_segments_transparent = map.selectAll(".river_segments")
             // bind segments to each element to be created
             .data(segments)
             // create an element for each datum
@@ -1044,16 +799,22 @@
             .append("path")
             // assign class for styling
             .attr("class", "c2p2 segs_transparent")
+            // project each element
             .attr("d", map_path)
-            // add stroke width based on widthScale function
+            // set stroke width to be large for selection
             .style("stroke-width", 6)
+            // set stroke to background color
             .style("stroke", "#000000")
+            // no fill
             .style("fill", "None")
+            // set opacity to 0 so segments aren't visible but can be selected
             .style("opacity", 0)
+            // trigger interactions
             .on("mouseover", function(d) {
                 mouseoverSeg_c2p2(d, tooltip);
             })
             .on("mousemove", function(d) {
+                // pass mouse coordinates
                 mouse_x = loc_map_c2p2.x
                 mouse_y = loc_map_c2p2.y
                 mousemoveSeg_c2p2(d, tooltip, mouse_x, mouse_y); // position
@@ -1062,14 +823,18 @@
                 mouseoutSeg_c2p2(d, tooltip);
             });
 
-        // add basin_buffered basin to map
+        // add basin_buffered basin to map - for selection only
         var drb_basin_buffered = map.append("path")
+            // bind data to element
             .datum(basin_buffered)
+            // set class for styling
             .attr("class", "c2p2 basin_buffered")
+            // project element
             .attr("d", map_path)
+            // style for selection only
             .style("fill", "#000000")
-            .style("stroke", "#000000")
-            .style("opacity", 1)
+            .style("opacity", 0)
+            // trigger dimming
             .on("mouseover", function(d) {
                 mouseoverDimSegs_c2p2(d)
             }) 
@@ -1079,9 +844,13 @@
 
         // add delaware bay to map
         var drb_bay = map.append("path")
+            // bind data to element
             .datum(bay)
+            // assign class for styling
             .attr("class", "c2p2 delaware_bay")
+            // project element
             .attr("d", map_path)
+            // trigger dimming
             .on("mouseover", function(d) {
                 mouseoverDimSegs_c2p2(d)
             }) 
@@ -1103,6 +872,7 @@
             .attr("class", function(d){
                 return "c2p2 reservoirs res_id" + d.properties.GRAND_ID
             })
+            // set stroke width so that polygons appear larger
             .style("stroke-width", 1)
 
         // add drb segments to map
@@ -1113,7 +883,8 @@
             .enter()
             // append each element to the svg as a path element
             .append("path")
-            // assign class for styling
+            // assign class for styling - based on segment id
+            // and based on years in which each segment has data
             .attr("class", function(d){
                 var seg_class = 'c2p2 river_segments seg'
                 seg_class += d.seg_id_nat
@@ -1130,16 +901,19 @@
             .style("stroke-width", function(d){
                 var value = d.properties['avg_ann_flow'];
                 if (value){
-                    return widthScale(value);
+                    return widthScale_c2(value);
                 } else {
                     return "#ccc";
                 }
             })
+            // set fill to none
             .style("fill", "None")
+            // trigger interactions
             .on("mouseover", function(d) {
                 mouseoverSeg_c2p2(d, tooltip);
             })
             .on("mousemove", function(d) {
+                // pass mouse coordinates
                 mouse_x = loc_map_c2p2.x
                 mouse_y = loc_map_c2p2.y
                 mousemoveSeg_c2p2(d, tooltip, mouse_x, mouse_y); 
@@ -1148,26 +922,6 @@
                 mouseoutSeg_c2p2(d, tooltip);
             });
            
-
-        // // add drb dams to map
-        // var drb_dams = d3.selectAll(".dams")
-        //     // bind points to each element to be created
-        //     .data(dams)
-        //     // create an element for each datum
-        //     .enter()
-        //     // append each element to the svg as a circle element
-        //     .append("path")
-        //     // project points and SET SIZE
-        //     .attr("d", map_path.pointRadius(2))
-        //     // assign class for styling
-        //     .attr("class", function(d){
-        //         return "c2p2 dams dam_id" + d.GRAND_ID
-        //     })
-        //     .style("fill", "#ffffff")
-        //     .style("stroke", "#000000")
-        //     .style("stroke-width", 0.4)
-        //     .style("opacity", 0.7)
-
         // add scale bar
         map.append("g").call(scaleBarTop)
         map.append("g").call(scaleBarBottom)
@@ -1197,6 +951,18 @@
         var myGroups = d3.map(csv_matrix_annual, function(d){return d[timestep_c2p2];}).keys() 
         var myVars = d3.map(csv_matrix_annual, function(d){return d.seg_id_nat;}).keys() 
 
+        // build x scale
+        var x = d3.scaleBand()
+            .range([0,matrix_width_c2p2])
+            .domain(myGroups)
+            .padding(0.1);
+
+        // build y scale
+        var y = d3.scaleBand()
+            .range([matrix_height_c2p2, 0])
+            .domain(myVars)
+            .padding(0.1);
+
         // build array of all values of observation counts
         var domainArrayTemporalCounts = [];
         for (var i=0; i<csv_matrix_annual.length; i++){
@@ -1208,24 +974,8 @@
             // }
         };
 
+        // Find maximum count of observations to use in color scale
         var temporalCountMax = Math.round(Math.max(...domainArrayTemporalCounts));
-        // console.log("temporalCountMax")
-        // console.log(temporalCountMax)
-
-        // var temporalCountMin = Math.round(Math.min(...domainArrayTemporalCounts));
-        // console.log(temporalCountMin)
-
-        // build x scales
-        var x = d3.scaleBand()
-            .range([0,matrix_width_c2p2])
-            .domain(myGroups)
-            .padding(0.1);
-
-        // build y scales
-        var y = d3.scaleBand()
-            .range([matrix_height_c2p2, 0])
-            .domain(myVars)
-            .padding(0.1);
 
         // color scale
         var myColor = d3.scaleSequential()
@@ -1302,48 +1052,39 @@
     // *********************************************************************//
     function createMatrixRectangles_c2p2(csv_matrix_annual, csv_annual_count, segments, tooltip) {
 
-        // // find root svg element
+        // // Set up necessary elements for mousemove event within svg with viewBox
+        // find root svg element
         var svg_matrix_c2p2 = document.querySelector('.matrix_c2p2');
-
-        // // create a SVGPoint for future math
+        // create a SVGPoint for future math
         var pt_matrix_c2p2 = svg_matrix_c2p2.createSVGPoint();
-
-        // //get point in global SVG space
+        // fucntion to get point in global SVG space
         function cursorPoint_matrix_c2p2(evt){
             pt_matrix_c2p2.x = evt.clientX; pt_matrix_c2p2.y = evt.clientY;
             return pt_matrix_c2p2.matrixTransform(svg_matrix_c2p2.getScreenCTM().inverse()); 
         }
-
+        // create local variable to store point coordinates
         var loc_matrix_c2p2
-
-        // // reset coordinates when mousemoves over map svg
+        // // reset coordinates when mousemoves over matrix svg
         svg_matrix_c2p2.addEventListener('mousemove', function(evt){
             loc_matrix_c2p2 = cursorPoint_matrix_c2p2(evt);
-            // console.log('x:')
-            // console.log(loc_matrix_c2p2.x)
-            // console.log('y:')
-            // console.log(loc_matrix_c2p2.y)
         }, false);     
 
 
-        // create matrix recangles variable
+        // // Build matrix
+        // create transformed matrix variable
         var transformedMatrix = d3.select(".c2p2.transformedMatrix")
-        // var matrixRectangles = svgMatrix.selectAll('matrixRect')
 
-        // read in data
+        // read in data for matrix
         var myGroups = d3.map(csv_matrix_annual, function(d){return d[timestep_c2p2];}).keys() 
         var myVars = d3.map(csv_matrix_annual, function(d){return d.seg_id_nat;}).keys() 
 
-        // var temporalCountMin = Math.round(Math.min(...domainArrayTemporalCounts));
-        // console.log(temporalCountMin)
-
-        // build x scales
+        // build x scale
         var xscale = d3.scaleBand()
             .range([0,matrix_width_c2p2])
             .domain(myGroups)
             .padding(0.1);
 
-        // build y scales
+        // build y scale
         var yscale = d3.scaleBand()
             .range([matrix_height_c2p2, 0])
             .domain(myVars)
@@ -1427,8 +1168,10 @@
     };
 
     // *********************************************************************//
+    // function to dim segments on mouseover of buffered basin or bay
     function mouseoverDimSegs_c2p2(data) {
 
+        // dim reservoirs, bay, and river segments
         d3.selectAll(".c2p2.reservoirs")
             .style("fill", "#172c4f")
             .style("stroke", "#172c4f")
@@ -1440,8 +1183,10 @@
     };
 
     // *********************************************************************//
+    // function to un-dim segments on mouseout of buffered basin or bay
     function mouseoutDimSegs_c2p2(data) {
 
+        // un-dim reservoirs, bay, and river segments
         d3.selectAll(".c2p2.reservoirs")
             .style("fill", "#6079a3")
             .style("stroke", "#6079a3")
@@ -1454,10 +1199,13 @@
 
 
     // *********************************************************************//
+    // function to populate and place c2p2 map tooltip
     function mousemoveSeg_c2p2(data, tooltip, mouse_x, mouse_y) { 
         
+        // find # of observations for selected reach
         var num_obs = data.properties.total_count;
 
+        // bind mouse coordinates and # of obs to tooltip
         tooltip
             .attr("y", mouse_y - 15)
             .attr("x", mouse_x + 15)
@@ -1571,11 +1319,14 @@
     };
 
     // *********************************************************************//
+    // function to populate and place c2p2 matrix tooltip
     function mousemoveRect_c2p2(data, tooltip, mouse_x, mouse_y) {
 
+        // identify selected year
         var selected_year = data[timestep_c2p2];
         console.log(selected_year);
 
+        // bind mouse coordinates and year to tooltip
         tooltip
             .attr("y", mouse_y - 15)
             .attr("x", mouse_x - 39)
@@ -1651,22 +1402,20 @@
     // *********************************************************************//
     // *********************************************************************//
 
-    function setSegments_c2p3(map_width, map_height, segments, stations, bay, reservoirs, dams, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale, segmentColorScale){
+    function setMap_c2p3(map_width, map_height, segments, bay, reservoirs, basin_buffered, map, map_path, scaleBarTop, scaleBarBottom, widthScale_c2){
 
+        // // Set up necessary elements for mousemove event within svg with viewBox
         // find root svg element
         var svg_map_c2p3 = document.querySelector('.map_c2p3');
-
         // create a SVGPoint for future math
         var pt_map_c2p3 = svg_map_c2p3.createSVGPoint();
-
-        //get point in global SVG space
+        // function to get point in global SVG space
         function cursorPoint_c2p3(evt){
             pt_map_c2p3.x = evt.clientX; pt_map_c2p3.y = evt.clientY;
             return pt_map_c2p3.matrixTransform(svg_map_c2p3.getScreenCTM().inverse()); 
         }
-
+        // create local variable to store point coordinates
         var loc_map_c2p3
-
         // reset coordinates when mousemoves over map svg
         svg_map_c2p3.addEventListener('mousemove', function(evt){
             loc_map_c2p3 = cursorPoint_c2p3(evt);
@@ -1676,10 +1425,12 @@
             // console.log(loc_map_c2p3.y)
         }, false);
 
+        // // Add tooltip as text appended to map svg
         // add tooltip to map svg
         var tooltip = map.append("text")
             .attr("class", "c2p3 tooltip map")
 
+        // // Add narrative text as html apppended to  map svg
         // add c2p3 narrative text
         var narrative = map.append("foreignObject")
         .attr("class", "c2p3 narrative")
@@ -1690,18 +1441,21 @@
         .attr("height", map_height)
         .append("xhtml:body")
             .attr("class", "c2p3 narrative")
-            .html('<p>If we look more closely at a single year of data, such as 2019, we can see not only \
-            the dynamics of data availability through space and time, but also the dynamics of\
-            stream temperature itself.</p><p>We can see a few general patterns: <span id="c2p3_min_t">cooler</span>\
-            temperatures in the winter and <span id="c2p3_max_t">warmer</span> temperatures in the summer;\
-            longer warm periods in the southern portion of the basin; and sudden basin-wide shifts in stream\
-            temperature during warm and cool fronts.</p><p>Nonetheless, the stream reaches do not\
-            all respond identically to climatic drivers, as they are also influenced by surrounding land use\
-            and upstream dynamics. Take, for example, the reaches that are within or immediately below\
-            reservoirs, which remain cool throughout the summer period.</p><p>Models help us\
-            to better understand what drives stream temperature throughout the basin and how\
-            stream temperatures may respond as the climate changes.</p><p id="tip_text"><i>Hover over the stream network, left, and the matrix chart, right, to\
-            explore the availability of data in space in time in 2019.</i></p>')
+            .html('<p>If we look more closely at a single year, we can \
+            see focus on the dynamics of stream temperature itself. \
+            Streams are <span id="c2p3_min_t">\
+            cooler</span> in the winter and <span id="c2p3_max_t">warmer</span> in the summer, and\
+            the warm periods are longer in the southern portion of the basin.</p><p>But the dynamics of \
+            stream temperature are not identical in all stream reaches. Reach-level temperatures are \
+            influenced by many factors, such as surrounding land use, the orientation and size of the stream, \
+            and inflow from upstream reaches. For example, reaches within or immediately below reservoirs remained \
+            cool throughout the 2019 summer period.</p>\
+            <p>Through modeling, we can explore reach-level patterns and improve our understanding of \
+            stream temperature dynamics. Models allow us to \
+            estimate temperatures in unobserved reaches and predict how stream \
+            temperatures may respond as the climate changes.</p>\
+            <p id="tip_text"><i>Hover over the stream network, left, and the matrix chart, right, to\
+            explore the availability of data in space in time.</i></p>')
 
         // add drb segments to map BACKGROUND
         var drb_segments = map.selectAll(".river_segments")
@@ -1714,7 +1468,6 @@
             // assign class for styling
             .attr("class", "c2p3 segs_transparent")
             .attr("d", map_path)
-            // add stroke width based on widthScale function
             .style("stroke-width", 6)
             .style("stroke", "#000000")
             .style("fill", "None")
@@ -1803,7 +1556,7 @@
             .style("stroke-width", function(d){
                 var value = d.properties['avg_ann_flow'];
                 if (value){
-                    return widthScale(value);
+                    return widthScale_c2(value);
                 } else {
                     return "#ccc";
                 }
@@ -1967,21 +1720,19 @@
     // *********************************************************************//
     function createMatrixRectangles_c2p3(csv_matrix_daily_2019, csv_daily_count_2019, segments, tooltip) {
 
-        // // find root svg element
+        // // Set up necessary elements for mousemove event within svg with viewBox
+        // find root svg element
         var svg_matrix_c2p3 = document.querySelector('.matrix_c2p3');
-
-        // // create a SVGPoint for future math
+        // create a SVGPoint for future math
         var pt_matrix_c2p3 = svg_matrix_c2p3.createSVGPoint();
-
-        // //get point in global SVG space
+        // function to get point in global SVG space
         function cursorPoint_matrix_c2p3(evt){
             pt_matrix_c2p3.x = evt.clientX; pt_matrix_c2p3.y = evt.clientY;
             return pt_matrix_c2p3.matrixTransform(svg_matrix_c2p3.getScreenCTM().inverse()); 
         }
-
+        // create local variable to store point coordinates
         var loc_matrix_c2p3
-
-        // // reset coordinates when mousemoves over map svg
+        // reset coordinates when mousemoves over matrix svg
         svg_matrix_c2p3.addEventListener('mousemove', function(evt){
             loc_matrix_c2p3 = cursorPoint_matrix_c2p3(evt);
             console.log('x:')
@@ -1990,24 +1741,21 @@
             console.log(loc_matrix_c2p3.y)
         }, false);     
 
-        // create matrix recangles variable
+        // // Build matrix
+        // create transformed matrix variable
         var transformedMatrix = d3.select(".c2p3.transformedMatrix")
-        // var matrixRectangles = svgMatrix.selectAll('matrixRect')
 
         // read in data
         var myGroups = d3.map(csv_matrix_daily_2019, function(d){return d[timestep_c2p3];}).keys() 
         var myVars = d3.map(csv_matrix_daily_2019, function(d){return d.seg_id_nat;}).keys() 
 
-        // var temporalCountMin = Math.round(Math.min(...domainArrayTemporalCounts));
-        // console.log(temporalCountMin)
-
-        // build x scales
+        // build x scale
         var xscale = d3.scaleBand()
             .range([0,matrix_width_c2p3])
             .domain(myGroups)
             .padding(0.1);
 
-        // build y scales
+        // build y scale
         var yscale = d3.scaleBand()
             .range([matrix_height_c2p3, 0])
             .domain(myVars)
@@ -2088,8 +1836,10 @@
     };
 
     // *********************************************************************//
+    // function to dim segments on mouseover of buffered basin or bay
     function mouseoverDimSegs_c2p3(data) {
 
+        // dim reservoirs, bay, and river segments
         d3.selectAll(".c2p3.reservoirs")
             .style("fill", "#172c4f")
             .style("stroke", "#172c4f")
@@ -2101,8 +1851,10 @@
     };
 
     // *********************************************************************//
+    // function to un-dim segments on mouseover of buffered basin or bay
     function mouseoutDimSegs_c2p3(data) {
 
+        // un-dim reservoirs, bay, and river segments
         d3.selectAll(".c2p3.reservoirs")
             .style("fill", "#6079a3")
             .style("stroke", "#6079a3")
@@ -2114,10 +1866,13 @@
     };
 
     // *********************************************************************//
+    // function to populate and place c2p3 map tooltip
     function mousemoveSeg_c2p3(data, tooltip, mouse_x, mouse_y) {
 
+        // find # of obs in 2019 for selected segment
         var num_obs = data.properties.year_count['2019'];
 
+        // bind mouse coordinates and # obs to tooltip
         tooltip
             .attr("y", mouse_y - 15)
             .attr("x", mouse_x + 15)
@@ -2230,17 +1985,20 @@
     };
 
     // *********************************************************************//
+    // function to populate and place c2p3 matrix tooltip
     function mousemoveRect_c2p3(data, tooltip, mouse_x, mouse_y) {
 
+        // identify selected date
         var selected_year = data[timestep_c2p3];
-        console.log(selected_year);
 
+        // set tooltip x coordinate based on mouse coordinates and position w/i matrix
         if (mouse_x > 70){
             var x_position = mouse_x - 60
         } else {
             var x_position = mouse_x + 20
         }
 
+        // bind adjusted mouse coordinates and year to tooltip
         tooltip
             .attr("y", mouse_y - 20)
             .attr("x", x_position)
