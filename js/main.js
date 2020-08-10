@@ -140,7 +140,7 @@
             .orient(d3.geoScaleBottom)
             .projection(map_projection)
             .size([map_width, map_height])
-            .left(.07) // .15 centered, .45 far right
+            .left(.13) // .15 centered, .45 far right
             .top(.94)
             .units(d3.geoScaleKilometers)
             .distance(50)
@@ -153,7 +153,7 @@
             .orient(d3.geoScaleTop)
             .projection(map_projection)
             .size([map_width, map_height])
-            .left(.07) // .15 centered, .45 far right
+            .left(.13) // .15 centered, .45 far right
             .top(.95)
             .units(d3.geoScaleMiles)
             .distance(25)
@@ -1020,17 +1020,19 @@
             .attr("height", map_height)
             .append("xhtml:body")
                 .attr("class", "c2p2 narrative")
-                .html('<p>But we cannot measure water temperature everywhere at all times.\
-                Therefore, observed temperature data has gaps in space and time. In the matrix chart,\
-                below, the columns represent years, and each row represents a stream reach within the\
-                 basin. If every stream reach had at least <b><i>one measurement of water temperature</i></b>\
-                  at a representative monitoring station <b><i>each year</i></b>, the rectangular chart \
-                  at right would be entirely <span id="c2p2_matrix_min"><b>blue</b></span>. If every reach \
-                  had at least <b><i>one measurement of water temperature</i></b> on <b><i>each day of each \
-                  year</i></b>, the rectangular chart at right would be entirely <span id="c2p2_matrix_max"><b>\
+                .html('<p>The reality is that we cannot measure water temperature everywhere at all times.\
+                Therefore, records of stream temperature have gaps in space and time. In the matrix chart,\
+                right, the columns represent years, and each row represents a stream reach within the\
+                 basin. If every stream reach had at least <span id="c2p2_matrix_bold">one measurement of \
+                 water temperature</span> at a representative monitoring station <span id="c2p2_matrix_bold">each year</span>, the chart \
+                  would be entirely <span id="c2p2_matrix_min"><b>blue</b></span>. If every reach \
+                  had at least <span id="c2p2_matrix_bold">one measurement of water temperature</span>  on \
+                  <span id="c2p2_matrix_bold">each day of each \
+                  year</span>, the chart would be entirely <span id="c2p2_matrix_max"><b>\
                   yellow</b></span>. Current monitoring efforts cannot reach either of these baselines. Black \
-                  sections in the chart below therefore indicate where we are "in the dark" about stream \
-                  temperature </p>')
+                  sections in the chart therefore represent where and when we are "in the dark" about stream \
+                  temperature </p><p id="tip_text"><i>Hover over the stream network, left, and the matrix chart, right, to\
+                  explore the availability of data in space in time.</i></p>')
 
         // add drb segments to map BACKGROUND
         var drb_segments = map.selectAll(".river_segments")
@@ -1275,7 +1277,7 @@
             .style("font-size", 10)
             .attr("transform", "translate(" + 0 + "," + matrix_height_c2p2 + ")")
             .attr("class", "c2p2 matrixAxis bottom")
-            .call(d3.axisBottom(x).tickSize(0).tickValues(['1980', '1990', '2000', '2010', '2019'])) /* '1980-01', '1990-01', '2000-01', '2010-01', '2019-01' */
+            .call(d3.axisBottom(x).tickSize(0).tickValues(['1980', '1990', '2000', '2010', '2019']).tickPadding(4)) /* '1980-01', '1990-01', '2000-01', '2010-01', '2019-01' */
             // .select(".domain").remove()
         transformedMatrix.append("g")
             .style("font-size", 0)
@@ -1688,7 +1690,18 @@
         .attr("height", map_height)
         .append("xhtml:body")
             .attr("class", "c2p3 narrative")
-            .html('<p>If we look at daily temperature observations in 2019, we can see...</p>')
+            .html('<p>If we look more closely at a single year of data, such as 2019, we can see not only \
+            the dynamics of data availability through space and time, but also the dynamics of\
+            stream temperature itself.</p><p>We can see a few general patterns: <span id="c2p3_min_t">cooler</span>\
+            temperatures in the winter and <span id="c2p3_max_t">warmer</span> temperatures in the summer;\
+            longer warm periods in the southern portion of the basin; and sudden basin-wide shifts in stream\
+            temperature during warm and cool fronts.</p><p>Nonetheless, the stream reaches do not\
+            all respond identically to climatic drivers, as they are also influenced by surrounding land use\
+            and upstream dynamics. Take, for example, the reaches that are within or immediately below\
+            reservoirs, which remain cool throughout the summer period.</p><p>Models help us\
+            to better understand what drives stream temperature throughout the basin and how\
+            stream temperatures may respond as the climate changes.</p><p id="tip_text"><i>Hover over the stream network, left, and the matrix chart, right, to\
+            explore the availability of data in space in time in 2019.</i></p>')
 
         // add drb segments to map BACKGROUND
         var drb_segments = map.selectAll(".river_segments")
@@ -1928,7 +1941,7 @@
             .style("font-size", 10)
             .attr("transform", "translate(" + 0 + "," + matrix_height_c2p3 + ")")
             .attr("class", "c2p3 matrixAxis bottom")
-            .call(d3.axisBottom(x).tickSize(0).tickValues(['2019-01-01', '2019-03-01', '2019-05-01', '2019-07-01', '2019-09-01', '2019-11-01'])) //.tickFormat(formatTime(parseTime()))
+            .call(d3.axisBottom(x).tickSize(0).tickValues(['2019-01-01', '2019-03-01', '2019-05-01', '2019-07-01', '2019-09-01', '2019-11-01']).tickPadding(4)) //.tickFormat(formatTime(parseTime()))
             // .select(".domain").remove()
         transformedMatrix.append("g")
             .style("font-size", 0)
