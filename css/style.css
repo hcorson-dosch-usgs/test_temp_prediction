@@ -1,7 +1,6 @@
 
 body {
   margin-bottom: 0px;
-  /* font-family: sans-serif; */
   font-family: 'Open Sans', arial, sans-serif;
   font-weight: 300;
   font-size: 1em;
@@ -36,7 +35,6 @@ body {
 #intro_row {
   margin-top: 3vh;
   margin-bottom: 3vh;
-  /* height: 90vh; */
 }
 #intro_row h2 {
   color: #cecece;
@@ -60,7 +58,7 @@ body {
 
 .narrative {
   color: #cecece;
-  font-size: 0.9em; /*.85vw */
+  font-size: 0.9em; 
   text-align: right;
   margin-right: 0.2vh;
 }
@@ -73,7 +71,7 @@ body {
 
 .states {
   fill: None;
-  stroke: #575757;
+  stroke: #636363;
   stroke-width: 0.5;
 }
 
@@ -115,7 +113,6 @@ body {
 
 .tooltip {
   fill: #ffffff;
-  /* color: #ffffff; */
   font-family: sans-serif;
   font-size: 0.7em;
   font-weight: bold;
