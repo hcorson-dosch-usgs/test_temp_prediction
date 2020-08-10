@@ -1,17 +1,96 @@
 
-.matrix {
-  stroke-width: 0.5px;
-  stroke-linejoin: round;
-}
-
 body {
   margin-bottom: 0px;
-  font-family: sans-serif;
+  /* font-family: sans-serif; */
+  font-family: 'Open Sans', arial, sans-serif;
+  font-weight: 300;
+  font-size: 1em;
+  background-color: black;
+  color: #525252;
+  text-align: center;
+}
+
+#c2p2_matrix_min {
+  font-weight: 700;
+  color: #302D85;
+}
+
+#c2p2_matrix_max {
+  font-weight: 700;
+  color: #EBE72C;
+}
+
+#c2p2_matrix_bold {
+  font-weight: 700;
+  font-style: italic;
+}
+
+#c2p3_min_t {
+  color: #354198;
+}
+
+#c2p3_max_t {
+  color: #AD1F28;
+}
+
+#intro_row {
+  margin-top: 3vh;
+  margin-bottom: 3vh;
+  /* height: 90vh; */
+}
+#intro_row h2 {
+  color: #cecece;
+}
+
+.row {
+  margin-top: 9vh;
+  margin-bottom: 9vh;
+  /* height: 90vh; */
+}
+
+#text_row {
+  margin-top: 50vh;
+  margin-bottom: 50vh;
+  /* height: 100vh; */
+}
+
+#filter_row {
+  height: 1vh;
+}
+
+#narrative_text {
+  text-align: left;
+  color: #cecece;
+  margin-right: 7vh;
+  font-size: 0.92em;
+}
+
+.narrative {
+  color: #cecece;
+  font-size: 0.89em;
+  text-align: right;
+  margin-right: 0.5vh;
+}
+
+#tip_text {
+  font-size: 0.75em;
+  color: #858585;
+  margin-right: 0.5vh;
+}
+
+.states {
+  fill: None;
+  stroke: #575757;
+  stroke-width: 0.5;
 }
 
 .delaware_bay {
     fill: #6079a3; 
   }
+
+.watershed {
+  fill: #e71212; 
+}
 
 .river_segments {
   stroke: #6079a3;
@@ -19,43 +98,64 @@ body {
   stroke-width: 0.5px;
 }
 
-#streamgraph {
-  margin: 0px 0 0 0px;
-  fill: none;
+.reservoirs {
+  fill:  #6079a3;
+  stroke: #6079a3; 
 }
 
-.y.label {
-  font-size: 13px;
+/* .c2p2.matrix_c2p2 {
+  margin-top: 5px;
+  position: absolute;
+  left: 20px;
+}
+
+.c2p3.matrix_c2p3 {
+  margin-top: 5px;
+  position: absolute;
+  left: 20px;
+} */
+
+.matrixAxis {
+  color: #7a7a7a;
+}
+
+.chartAxis {
+  color: #999999;
+  font-size: .60em;
+}
+
+.legend {
+  font-family: 'Open Sans', arial, sans-serif;
+  font-size: 0.6em;
+  fill: #999999;
+}
+
+.chartAxisText {
+  fill: #999999;
+  font-size: 1.2em;
 }
 
 .dropdown {
   width: 45%;
-  position: relative;
+  position: absolute;
+  left: 55px;
   text-align: left;
-  top: 15px; /* was 70 with map border*/
-  left: 55px; /* was 420 with map border*/
   z-index: 10;
   font-family: sans-serif;
   font-size: 0.7em;
   font-weight: bold;
-  color: #bd0d0d;
+  color: #44095c;
   padding: 2px;
   border: 1px solid #999;
   box-shadow: 1px 1px 4px #b3b3b3; /* 2px 2px 4px #999 */
 }
 
 .tooltip {
+  fill: #ffffff;
+  /* color: #ffffff; */
   font-family: sans-serif;
   font-size: 0.7em;
-  /* margin: 0 2px 0 0; */
-  /* position: absolute; */
-  /* height: 33px; */
-  /* min-width: 5px;
-  /* color: #000; */
-  /* background-color: #fff; */
-  /* opacity: 0.9; */
-  /* fill: rgba(232, 232, 232, 0.2) */
-  /* border: solid thin #fff; */
-  /* padding: 5px 5px; */
-  /* top: -75px; */ */
+  font-weight: bold;
+  line-height: 1em;
 }
+
