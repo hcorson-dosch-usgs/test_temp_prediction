@@ -1477,7 +1477,7 @@
         .append("xhtml:body")
             .attr("class", "c2p3 narrative")
             .html('<p>If we look more closely at a single year, we can \
-            see focus on the dynamics of stream temperature itself. \
+            see the dynamics of stream temperature itself. \
             Streams are <span id="c2p3_min_t">\
             cooler</span> in the winter and <span id="c2p3_max_t">warmer</span> in the summer, and\
             the warm periods are longer in the southern portion of the basin.</p><p>But the dynamics of \
